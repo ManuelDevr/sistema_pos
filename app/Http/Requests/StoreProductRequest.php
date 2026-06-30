@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreProductRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        // Doble validación: Solo administradores pueden crear productos
+        return $this->user() && $this->user()->rol === 'Administrador';
+    }
+
+    public function rules(): array
+    {
+        return [
+            'nombre' => 'required|string|max:150',
+            'sku' => 'nullable|string|max:50|unique:productos,sku',
+            'codigo_barras' => 'nullable|string|max:50|unique:productos,codigo_barras',
+            'descripcion' => 'nullable|string',
+            'stock' => 'required|integer|min:0',
+            'stock_minimo' => 'nullable|integer|min:0',
+            'precio_compra' => 'required|numeric|min:0',
+            'precio_venta' => 'required|numeric|min:0',
+            'margen_ganancia' => 'nullable|numeric|min:0',
+            'unidad_medida' => 'required|string|max:50',
+            'tasa_descuento' => 'nullable|numeric|min:0|max:100',
+            'categoria_id' => 'required|exists:categorias,id',
+            'marca_id' => 'nullable|exists:marcas,id',
+        ];
+    }
+}
