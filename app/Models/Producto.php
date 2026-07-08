@@ -26,6 +26,7 @@ class Producto extends Model
         'estado',
         'categoria_id',
         'marca_id',
+        'imagen_url',
     ];
 
     public function categoria(): BelongsTo

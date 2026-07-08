@@ -49,12 +49,16 @@ class HandleInertiaRequests extends Middleware
                     \App\Models\Producto::where('stock', '<=', DB::raw('stock_minimo'))
                         ->where('estado', 'Activo')
                         ->get()
-                        ->map(fn($p) => [
-                            'id'      => $p->id,
-                            'type'    => 'warning',
-                            'title'   => 'Stock Bajo',
-                            'message' => "El producto {$p->nombre} tiene solo {$p->stock} unidades.",
-                        ])
+                        ->map(function($p) {
+                            $type = $p->stock <= 0 ? 'danger' : 'warning';
+                            $title = $p->stock <= 0 ? 'Sin Stock' : 'Stock Bajo';
+                            return [
+                                'id'      => $p->id,
+                                'type'    => $type,
+                                'title'   => $title,
+                                'message' => "El producto {$p->nombre} tiene solo " . (int)$p->stock . " unidades.",
+                            ];
+                        })
                         ->values()
                   )
                 : [],

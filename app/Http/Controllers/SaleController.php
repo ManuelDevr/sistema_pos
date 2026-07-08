@@ -33,7 +33,7 @@ class SaleController extends Controller
     public function pos()
     {
         return Inertia::render('Sales/PointOfSale', [
-            'productos' => Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id')
+            'productos' => Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'imagen_url')
                 ->with(['marca:id,nombre', 'conversiones.unidad:id,nombre,abreviatura'])
                 ->where('estado', 'Activo')
                 ->get(),

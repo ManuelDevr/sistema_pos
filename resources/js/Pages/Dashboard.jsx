@@ -55,7 +55,6 @@ export default function Dashboard({ stats }) {
     { label: 'Venta Rápida', path: '/venta-rapida', icon: FaBolt, color: { bg: 'bg-green-50', hoverBg: 'bg-green-100', iconBg: 'bg-green-100', icon: 'text-green-600' } },
     { label: 'Mis Ventas', path: '/mis-ventas', icon: FileText, color: { bg: 'bg-indigo-50', hoverBg: 'bg-indigo-100', iconBg: 'bg-indigo-100', icon: 'text-indigo-600' } },
     { label: 'Catálogo', path: '/catalogo-productos', icon: List, color: { bg: 'bg-sky-50', hoverBg: 'bg-sky-100', iconBg: 'bg-sky-100', icon: 'text-sky-600' } },
-    { label: 'Clientes', path: '/gestion-clientes', icon: Users, color: { bg: 'bg-slate-100', hoverBg: 'bg-slate-200', iconBg: 'bg-slate-200', icon: 'text-slate-600' } },
   ];
 
   const quickActions = user?.rol === 'Administrador' ? adminActions : cashierActions;

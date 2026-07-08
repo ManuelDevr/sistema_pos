@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/productos', [ProductController::class, 'store'])->middleware('permission:gestionar_productos')->name('productos.store');
         Route::put('/productos/{producto}', [ProductController::class, 'update'])->middleware('permission:gestionar_productos')->name('productos.update');
         Route::patch('/productos/{producto}/toggle', [ProductController::class, 'toggleStatus'])->middleware('permission:gestionar_productos')->name('productos.toggle');
+        Route::delete('/productos/{producto}/imagen', [ProductController::class, 'destroyImage'])->middleware('permission:gestionar_productos')->name('productos.imagen.destroy');
         Route::post('/productos/{producto}/conversiones', [ProductController::class, 'storeConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.store');
         Route::put('/conversiones/{conversion}', [ProductController::class, 'updateConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.update');
         Route::patch('/conversiones/{conversion}/toggle', [ProductController::class, 'toggleStatusConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.toggle');

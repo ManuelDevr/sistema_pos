@@ -28,6 +28,7 @@ class StoreProductRequest extends FormRequest
             'tasa_descuento' => 'nullable|numeric|min:0|max:100',
             'categoria_id' => 'required|exists:categorias,id',
             'marca_id' => 'nullable|exists:marcas,id',
+            'imagen' => 'nullable|image|max:2048',
         ];
     }
 }

@@ -25,3 +25,4 @@ Thumbs.db
 /bootstrap/cache/*
 .env.local
 .phpstorm.meta.php
+.aider*

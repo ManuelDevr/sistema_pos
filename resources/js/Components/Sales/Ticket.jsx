@@ -42,7 +42,7 @@ const Ticket = React.forwardRef(({ sale }, ref) => {
         <p className="font-bold">COMPROBANTE: {sale.nro_comprobante}</p>
         <p>FECHA DE EMISIÓN: {fechaEmision}</p>
         <p>HORA: {horaEmision}</p>
-        <p className="truncate">CLIENTE: <span className="font-bold">{sale.cliente?.nombre || 'CLIENTE GENERAL'}</span></p>
+        <p className="truncate">CLIENTE: <span className="font-bold">{sale.cliente?.nombre || 'CLIENTES VARIOS'}</span></p>
         {sale.cliente?.ruc_dni && <p>DNI/RUC: {sale.cliente.ruc_dni}</p>}
         <p className="truncate">VENDEDOR: {sale.user?.name || 'Cajero'}</p>
       </div>

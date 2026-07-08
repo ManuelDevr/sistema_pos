@@ -1,13 +1,17 @@
 import React from 'react';
-import { Package, ShoppingCart, Eye } from 'lucide-react';
+import { Package, ShoppingCart, Eye, Image as ImageIcon } from 'lucide-react';
 
 export default function ProductCard({ product, onAdd, onView }) {
   const isOutOfStock = product.stock <= 0;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all group overflow-hidden flex flex-col h-full">
-      <div className="relative aspect-square bg-slate-50 overflow-hidden flex items-center justify-center p-6">
-        <Package size={64} className="text-slate-200 group-hover:scale-110 transition-transform duration-500" />
+      <div className="relative aspect-square bg-slate-50 overflow-hidden flex items-center justify-center">
+        {product.imagen_url ? (
+          <img src={product.imagen_url} alt={product.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <ImageIcon size={64} className="text-slate-200 group-hover:scale-110 transition-transform duration-500" />
+        )}
         
         {isOutOfStock && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
@@ -50,7 +54,7 @@ export default function ProductCard({ product, onAdd, onView }) {
             <div className="text-right">
                 <span className="text-[10px] text-slate-400 font-bold uppercase block">Stock</span>
                 <span className={`text-xs font-black ${isOutOfStock ? 'text-rose-500' : 'text-slate-700'}`}>
-                    {product.stock} {product.unidad_medida}
+                    {parseInt(product.stock, 10)} {product.unidad_medida}
                 </span>
             </div>
         </div>
