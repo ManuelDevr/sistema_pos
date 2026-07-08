@@ -8,6 +8,7 @@ use App\Models\Marca;
 use App\Models\Unidad;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -32,7 +33,7 @@ class ProductController extends Controller
     public function catalog()
     {
         return Inertia::render('Products/Catalog', [
-            'productos' => Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id')
+            'productos' => Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
                 ->with(['marca:id,nombre', 'categoria:id,nombre'])
                 ->where('estado', 'Activo')
                 ->orderBy('nombre')
@@ -47,7 +48,7 @@ class ProductController extends Controller
         $producto->load(['categoria:id,nombre', 'marca:id,nombre', 'conversiones.unidad:id,nombre,abreviatura']);
         
         // Productos similares (misma categoría)
-        $similares = Producto::select('id', 'nombre', 'sku', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id')
+        $similares = Producto::select('id', 'nombre', 'sku', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
             ->with(['marca:id,nombre'])
             ->where('categoria_id', $producto->categoria_id)
             ->where('id', '!=', $producto->id)
@@ -61,18 +62,40 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request, SupabaseStorageService $supabase)
     {
-        Producto::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('imagen')) {
+            $data['imagen_url'] = $supabase->upload($request->file('imagen'));
+        }
+
+        Producto::create($data);
 
         return redirect()->back()->with('success', 'Producto creado correctamente.');
     }
 
-    public function update(UpdateProductRequest $request, Producto $producto)
+    public function update(UpdateProductRequest $request, Producto $producto, SupabaseStorageService $supabase)
     {
-        $producto->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('imagen')) {
+            $data['imagen_url'] = $supabase->upload($request->file('imagen'), $producto->imagen_url);
+        }
+
+        $producto->update($data);
 
         return redirect()->back()->with('success', 'Producto actualizado.');
+    }
+
+    public function destroyImage(Producto $producto, SupabaseStorageService $supabase)
+    {
+        if ($producto->imagen_url) {
+            $supabase->delete($producto->imagen_url);
+            $producto->update(['imagen_url' => null]);
+        }
+
+        return redirect()->back()->with('success', 'Imagen eliminada correctamente.');
     }
 
     public function toggleStatus(Producto $producto)

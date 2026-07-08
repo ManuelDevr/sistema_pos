@@ -52,7 +52,8 @@ export default function Catalog({ productos, categorias, marcas }) {
 
     return productos.filter(p => {
       const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                           (p.codigo_barras && p.codigo_barras.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesCategory = !selectedCategory || categoryIds.includes(p.categoria_id);
       const matchesBrand = !selectedBrand || p.marca_id === parseInt(selectedBrand);
@@ -85,7 +86,7 @@ export default function Catalog({ productos, categorias, marcas }) {
                 <input 
                     type="text" 
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent focus:border-indigo-500 focus:ring-0 rounded-2xl text-sm font-bold shadow-inner"
-                    placeholder="Buscar por nombre o SKU..."
+                    placeholder="Buscar por nombre, SKU o código..."
                     value={searchTerm}
                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
@@ -183,8 +184,12 @@ export default function Catalog({ productos, categorias, marcas }) {
                                 <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300">
-                                                <Package size={20} />
+                                            <div className="w-10 h-10 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center text-slate-300">
+                                                {product.imagen_url ? (
+                                                  <img src={product.imagen_url} alt={product.nombre} className="w-full h-full object-cover" />
+                                                ) : (
+                                                  <Package size={20} />
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="font-bold text-slate-800 text-sm">{product.nombre}</p>
@@ -198,7 +203,7 @@ export default function Catalog({ productos, categorias, marcas }) {
                                         </span>
                                     </td>
                                     <td className="p-4 text-center font-bold text-slate-600 text-sm">
-                                        {product.stock} {product.unidad_medida}
+                                        {parseInt(product.stock, 10)} {product.unidad_medida}
                                     </td>
                                     <td className="p-4 text-right font-black text-slate-800">
                                         S/ {parseFloat(product.precio_venta).toFixed(2)}

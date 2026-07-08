@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Search, Filter, ArrowUpCircle, ArrowDownCircle, ClipboardList, Calendar, User, Package, Download, X } from 'lucide-react';
+import { Search, Filter, ArrowUpCircle, ArrowDownCircle, ClipboardList, Calendar, User, Package, Image as ImageIcon, Download, X } from 'lucide-react';
 import Pagination from '@/Components/Pagination';
 import toast from 'react-hot-toast';
 import { generateProfessionalPDF } from '@/Utils/pdfGenerator';
@@ -58,9 +58,9 @@ export default function Kardex({ movimientos, productos, filters }) {
             m.producto.nombre,
             m.tipo_movimiento,
             m.motivo,
-            parseFloat(m.cantidad),
-            parseFloat(m.stock_anterior),
-            parseFloat(m.stock_actual)
+            parseInt(m.cantidad, 10),
+            parseInt(m.stock_anterior, 10),
+            parseInt(m.stock_actual, 10)
         ]);
 
         generateProfessionalPDF({
@@ -181,8 +181,12 @@ export default function Kardex({ movimientos, productos, filters }) {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                    <Package size={16} />
+                                                <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center text-slate-400">
+                                                    {m.producto.imagen_url ? (
+                                                        <img src={m.producto.imagen_url} alt={m.producto.nombre} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <ImageIcon size={16} />
+                                                    )}
                                                 </div>
                                                 <div className="max-w-[200px]">
                                                     <p className="font-bold text-slate-800 truncate">{m.producto.nombre}</p>
@@ -204,13 +208,13 @@ export default function Kardex({ movimientos, productos, filters }) {
                                             {m.motivo}
                                         </td>
                                         <td className={`p-4 text-center font-black ${m.tipo_movimiento === 'ENTRADA' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                            {m.tipo_movimiento === 'ENTRADA' ? '+' : '-'}{parseFloat(m.cantidad)}
+                                            {m.tipo_movimiento === 'ENTRADA' ? '+' : '-'}{parseInt(m.cantidad, 10)}
                                         </td>
                                         <td className="p-4 text-center font-bold text-slate-400">
-                                            {parseFloat(m.stock_anterior)}
+                                            {parseInt(m.stock_anterior, 10)}
                                         </td>
                                         <td className="p-4 text-center font-black text-slate-800">
-                                            {parseFloat(m.stock_actual)}
+                                            {parseInt(m.stock_actual, 10)}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">

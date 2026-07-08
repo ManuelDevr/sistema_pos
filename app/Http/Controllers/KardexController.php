@@ -12,7 +12,7 @@ class KardexController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kardex::with(['producto:id,nombre,sku', 'user:id,name'])
+        $query = Kardex::with(['producto:id,nombre,sku,imagen_url', 'user:id,name'])
             ->orderBy('created_at', 'desc');
 
         // Filtrar por producto

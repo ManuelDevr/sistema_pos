@@ -170,7 +170,7 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
         icon: ShoppingBag,
         items: [
             { icon: History, label: 'Historial de Ventas', routeName: 'gestion-ventas', permission: 'ver_historial_ventas' },
-            { icon: FaUserFriends, label: 'Clientes', routeName: 'gestion-clientes', permission: 'gestionar_clientes' },
+            // { icon: FaUserFriends, label: 'Clientes', routeName: 'gestion-clientes', permission: 'gestionar_clientes' },
         ]
     },
     { 

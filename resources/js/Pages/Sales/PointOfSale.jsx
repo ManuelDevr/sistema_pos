@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, router } from '@inertiajs/react';
-import { Search, Plus, Minus, X, Trash2, User, ShoppingCart, DollarSign, CreditCard, CheckCircle, Package, ArrowRight, LayoutGrid, List, ScanLine, Scale, Printer } from 'lucide-react';
+import { Search, Plus, Minus, X, Trash2, User, ShoppingCart, DollarSign, CreditCard, CheckCircle, Package, Image as ImageIcon, ArrowRight, LayoutGrid, List, ScanLine, Scale, Printer } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import Ticket from '@/Components/Sales/Ticket';
 import toast from 'react-hot-toast';
@@ -22,6 +22,8 @@ export default function PointOfSale({ productos }) {
   const [paymentMethod, setPaymentMethod] = useState('Efectivo');
   const [paidWith, setPaidWith] = useState('');
   const [isClientModalOpen, setClientModalOpen] = useState(false);
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [tipoComprobante, setTipoComprobante] = useState('Boleta');
   const [activeTab, setActiveTab] = useState('catalog');
 
   // Estado para selección de unidad
@@ -33,6 +35,7 @@ export default function PointOfSale({ productos }) {
   const [completedSale, setCompletedSale] = useState(null);
   const [tempSaleInfo, setTempSaleInfo] = useState(null);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
+  const [lastSaleId, setLastSaleId] = useState(null);
   const ticketRef = useRef(null);
 
   const handlePrint = useReactToPrint({
@@ -41,7 +44,7 @@ export default function PointOfSale({ productos }) {
   });
 
   useEffect(() => {
-    if (flash?.last_sale) {
+    if (flash?.last_sale && flash.last_sale.id !== lastSaleId) {
       setCompletedSale({
         ...flash.last_sale,
         pagado_con: tempSaleInfo?.paidWith,
@@ -49,13 +52,13 @@ export default function PointOfSale({ productos }) {
         metodo_pago: tempSaleInfo?.paymentMethod || flash.last_sale.metodo_pago
       });
       setSuccessModalOpen(true);
+      setLastSaleId(flash.last_sale.id);
     }
-  }, [flash, tempSaleInfo]);
+  }, [flash, lastSaleId, tempSaleInfo]);
 
   const handleCloseSuccessModal = () => {
     setSuccessModalOpen(false);
-    setCompletedSale(null);
-    setTempSaleInfo(null);
+    // No reseteamos tempSaleInfo ni completedSale aún para no romper el ticket si decide imprimirlo después
   };
 
   // Lógica del Escáner de Código de Barras
@@ -208,6 +211,7 @@ export default function PointOfSale({ productos }) {
     router.post(route('ventas.store'), {
         total: total,
         metodo_pago: paymentMethod,
+        tipo_comprobante: tipoComprobante,
         cliente_id: selectedClient?.id || null,
         items: cart.map(item => ({
             producto_id: item.id,
@@ -223,12 +227,18 @@ export default function PointOfSale({ productos }) {
             setSelectedClient(null);
             setCustomerSearch('');
             setPaidWith('');
+            setPaymentModalOpen(false);
             setActiveTab('catalog');
         },
         onError: (err) => {
             toast.error(err.error || 'Error al procesar la venta');
         }
     });
+  };
+
+  const handleOpenPaymentModal = () => {
+      if (cart.length === 0) return;
+      setPaymentModalOpen(true);
   };
 
   return (
@@ -292,7 +302,11 @@ export default function PointOfSale({ productos }) {
                     className="group bg-white p-3 rounded-2xl border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all text-left flex flex-col h-full"
                 >
                   <div className="relative aspect-square rounded-xl bg-slate-50 overflow-hidden mb-3">
-                    <Package size={40} className="w-full h-full p-8 text-slate-200" />
+                    {product.imagen_url ? (
+                      <img src={product.imagen_url} alt={product.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <ImageIcon size={40} className="w-full h-full p-8 text-slate-200" />
+                    )}
                     {product.stock <= 0 && (
                         <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
                             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase">Agotado</span>
@@ -315,7 +329,7 @@ export default function PointOfSale({ productos }) {
                   </div>
                   <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-50">
                     <span className="text-lg font-black text-indigo-600">S/ {parseFloat(product.precio_venta).toFixed(2)}</span>
-                    <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">Stock: {product.stock}</div>
+                    <div className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">Stock: {parseInt(product.stock, 10)}</div>
                   </div>
                 </button>
               ))}
@@ -326,49 +340,7 @@ export default function PointOfSale({ productos }) {
         {/* Panel del Carrito */}
         <div className={`bg-white rounded-2xl border border-slate-200 shadow-xl flex flex-col overflow-hidden border-t-4 border-t-indigo-600 ${activeTab !== 'cart' && 'hidden lg:flex'}`}>
           
-          {/* Header del Carrito: Cliente */}
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                    <User size={16} className="text-slate-400" />
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cliente</span>
-                </div>
-                <div className="relative">
-                    <input 
-                        type="text" 
-                        placeholder={selectedClient ? selectedClient.nombre : "Buscar cliente..."}
-                        value={customerSearch}
-                        onChange={e => { setCustomerSearch(e.target.value); }}
-                        className="w-full pl-3 pr-10 py-2 bg-white border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-sm font-medium"
-                    />
-                    <button 
-                        onClick={() => setClientModalOpen(true)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all"
-                    >
-                        <Plus size={14} />
-                    </button>
-                </div>
-                
-                {(clientResults.length > 0 || isSearchingClients) && customerSearch.trim() && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
-                        {isSearchingClients ? (
-                            <div className="px-4 py-3 text-sm text-slate-400 text-center">Buscando...</div>
-                        ) : (
-                            clientResults.map(c => (
-                                <button 
-                                    key={c.id} 
-                                    onClick={() => { setSelectedClient(c); setCustomerSearch(c.nombre); setClientResults([]); }}
-                                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0 transition-colors"
-                                >
-                                    <p className="font-bold text-slate-800 text-sm">{c.nombre}</p>
-                                    <p className="text-xs text-slate-400">{c.ruc_dni || 'Sin DNI'}</p>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                )}
-            </div>
-          </div>
+          {/* Se movió la búsqueda de cliente al modal de pago */}
 
           {/* Lista de Items */}
           <div className="flex-1 min-h-[300px] lg:min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -381,7 +353,11 @@ export default function PointOfSale({ productos }) {
                 cart.map(item => (
                     <div key={`${item.id}-${item.conversion_id}`} className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-200">
                         <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                            <Package className="w-full h-full p-2 text-slate-300" />
+                            {item.image ? (
+                              <img src={item.image} className="w-full h-full object-cover" />
+                            ) : (
+                              <Package className="w-full h-full p-2 text-slate-300" />
+                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="text-sm font-bold text-slate-800 truncate">{item.nombre}</h4>
@@ -430,67 +406,28 @@ export default function PointOfSale({ productos }) {
 
           {/* Footer del Carrito: Totales y Pago */}
           <div className="p-5 bg-white border-t border-slate-100 space-y-4 mt-auto shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total a Pagar</span>
                 <span className="text-3xl font-black text-indigo-600">S/ {cartTotal().toFixed(2)}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Método</label>
-                    <div className="relative text-slate-800">
-                        <select 
-                            value={paymentMethod} 
-                            onChange={e => setPaymentMethod(e.target.value)}
-                            className="w-full pl-3 pr-8 py-2.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-xs font-bold text-slate-700 appearance-none shadow-sm"
-                        >
-                            <option>Efectivo</option>
-                            <option>Yape</option>
-                            <option>BCP</option>
-                            <option>Plin</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ArrowRight size={12} className="rotate-90" /></div>
-                    </div>
-                </div>
-
-                {paymentMethod === 'Efectivo' && (
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Paga con</label>
-                        <input 
-                            type="number" 
-                            placeholder="0.00"
-                            value={paidWith}
-                            onChange={e => setPaidWith(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-xs font-bold text-slate-800 shadow-sm"
-                        />
-                    </div>
-                )}
-            </div>
-
-            {paymentMethod === 'Efectivo' && paidWith > 0 && (
-                <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-2xl border border-emerald-100 animate-in fade-in zoom-in-95 duration-200">
-                    <span className="text-xs font-bold text-emerald-600 uppercase tracking-tight">Su Vuelto</span>
-                    <span className="text-xl font-black text-emerald-700">S/ {change.toFixed(2)}</span>
-                </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
                 <button 
                     onClick={clearCart}
-                    className="w-12 h-12 bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                    className="w-14 h-14 bg-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl flex items-center justify-center transition-all active:scale-95"
                     title="Vaciar Carrito"
                 >
-                    <Trash2 size={18} />
+                    <Trash2 size={24} />
                 </button>
                 <button 
-                    onClick={handlePlaceOrder}
+                    onClick={handleOpenPaymentModal}
                     disabled={cart.length === 0}
-                    className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    className="flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                     {cart.length === 0 ? 'Carrito Vacío' : (
                         <>
-                            <CheckCircle size={18} />
-                            Finalizar Venta
+                            <CreditCard size={20} />
+                            Proceder con el pago
                         </>
                     )}
                 </button>
@@ -501,6 +438,131 @@ export default function PointOfSale({ productos }) {
 
       <CommonModal isOpen={isClientModalOpen} onClose={() => setClientModalOpen(false)} title="Nuevo Cliente">
         <ClientForm onClose={() => setClientModalOpen(false)} />
+      </CommonModal>
+
+      {/* Modal de Pago y Selección de Documento */}
+      <CommonModal isOpen={isPaymentModalOpen} onClose={() => setPaymentModalOpen(false)} title="Procesar Pago">
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div>
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1 mb-2 block">Tipo de Comprobante</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {['Guía de Remisión', 'Boleta', 'Factura'].map(tipo => (
+                            <button
+                                key={tipo}
+                                onClick={() => {
+                                    setTipoComprobante(tipo);
+                                    setSelectedClient(null);
+                                    setCustomerSearch('');
+                                }}
+                                className={`py-2 px-2 text-xs font-bold rounded-xl border transition-all ${tipoComprobante === tipo ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}
+                            >
+                                {tipo}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="relative">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
+                        {tipoComprobante === 'Factura' ? 'Buscar RUC' : (tipoComprobante === 'Boleta' ? 'Buscar DNI' : 'Buscar DNI / RUC')}
+                    </label>
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input 
+                            type="text" 
+                            placeholder={selectedClient ? selectedClient.nombre : (tipoComprobante === 'Boleta' && cartTotal() < 700 ? 'Clientes Varios' : `Ingrese ${tipoComprobante === 'Factura' ? 'RUC' : 'DNI'}...`)}
+                            value={customerSearch}
+                            onChange={e => setCustomerSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2.5 bg-white border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-sm font-medium"
+                        />
+                    </div>
+
+                    {(clientResults.length > 0 || isSearchingClients) && customerSearch.trim() && (
+                        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-48 overflow-y-auto">
+                            {isSearchingClients ? (
+                                <div className="px-4 py-3 text-sm text-slate-400 text-center">Buscando...</div>
+                            ) : (
+                                clientResults.map(c => (
+                                    <button 
+                                        key={c.id} 
+                                        onClick={() => { setSelectedClient(c); setCustomerSearch(c.nombre); setClientResults([]); }}
+                                        className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0 transition-colors"
+                                    >
+                                        <p className="font-bold text-slate-800 text-sm">{c.nombre}</p>
+                                        <p className="text-xs text-slate-400">{c.ruc_dni || 'Sin Documento'}</p>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1 block">Método de Pago</label>
+                        <div className="relative text-slate-800">
+                            <select 
+                                value={paymentMethod} 
+                                onChange={e => setPaymentMethod(e.target.value)}
+                                className="w-full pl-3 pr-8 py-2.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-sm font-bold text-slate-700 appearance-none shadow-sm"
+                            >
+                                <option>Efectivo</option>
+                                <option>Yape</option>
+                                <option>BCP</option>
+                                <option>Plin</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ArrowRight size={14} className="rotate-90" /></div>
+                        </div>
+                    </div>
+
+                    {paymentMethod === 'Efectivo' && (
+                        <div className="space-y-1">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1 block">Paga con</label>
+                            <input 
+                                type="number" 
+                                placeholder="0.00"
+                                value={paidWith}
+                                onChange={e => setPaidWith(e.target.value)}
+                                className={`w-full px-4 py-2.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-xl text-sm font-bold shadow-sm ${paidWith !== '' && parseFloat(paidWith) < cartTotal() ? 'text-red-600 border-red-300' : 'text-slate-800'}`}
+                            />
+                            {paidWith !== '' && parseFloat(paidWith) < cartTotal() && (
+                                <p className="text-[10px] text-red-500 font-bold ml-1">Falta S/ {(cartTotal() - parseFloat(paidWith)).toFixed(2)}</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {paymentMethod === 'Efectivo' && paidWith > 0 && (
+                    <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <span className="text-sm font-bold text-emerald-600 uppercase tracking-tight">Su Vuelto</span>
+                        <span className="text-xl font-black text-emerald-700">S/ {change.toFixed(2)}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
+                <span className="font-bold text-slate-500">Total a Pagar</span>
+                <span className="text-2xl font-black text-indigo-600">S/ {cartTotal().toFixed(2)}</span>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex gap-3">
+                <button 
+                    onClick={() => setPaymentModalOpen(false)}
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    onClick={handlePlaceOrder}
+                    disabled={paymentMethod === 'Efectivo' && (paidWith === '' || parseFloat(paidWith) < cartTotal())}
+                    className="flex-1 py-3 bg-indigo-600 text-white font-black rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                    <CheckCircle size={18} />
+                    Completar
+                </button>
+            </div>
+        </div>
       </CommonModal>
 
       {/* Modal de Selección de Unidad */}

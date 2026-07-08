@@ -117,17 +117,25 @@ const Header = ({ toggleSidebar }) => {
           </div>
         ) : (
           <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {notifications.map(notif => (
-              <div key={notif.id} className="flex items-start gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 group transition-all">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
-                    <AlertTriangle size={20} />
+            {notifications.map(notif => {
+              const isDanger = notif.type === 'danger';
+              const bgClass = isDanger ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100';
+              const iconBgClass = isDanger ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600';
+              const titleClass = isDanger ? 'text-rose-900' : 'text-amber-900';
+              const textClass = isDanger ? 'text-rose-700' : 'text-amber-700';
+              const Icon = isDanger ? XCircle : AlertTriangle;
+
+              return (
+              <div key={notif.id} className={`flex items-start gap-4 p-4 rounded-2xl border group transition-all ${bgClass}`}>
+                <div className={`p-2 rounded-xl ${iconBgClass}`}>
+                    <Icon size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-amber-900">{notif.title}</h4>
-                  <p className="text-xs text-amber-700 mt-0.5 font-medium leading-relaxed">{notif.message}</p>
+                  <h4 className={`font-bold text-sm ${titleClass}`}>{notif.title}</h4>
+                  <p className={`text-xs mt-0.5 font-medium leading-relaxed ${textClass}`}>{notif.message}</p>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </CommonModal>
@@ -149,7 +157,7 @@ const Header = ({ toggleSidebar }) => {
                 <div key={`${item.id}-${item.unit_id}`} className="flex items-center gap-4 group">
                   <div className="w-14 h-14 rounded-xl bg-slate-50 overflow-hidden border border-slate-100 flex-shrink-0">
                     {item.image ? (
-                        <img src={`/storage/${item.image}`} className="w-full h-full object-cover" />
+                        <img src={item.image} className="w-full h-full object-cover" />
                     ) : <Package className="w-full h-full p-3 text-slate-200" />}
                   </div>
                   <div className="flex-1 min-w-0">

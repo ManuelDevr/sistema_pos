@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Archive, Diamond, Package, Tag as TagIcon, AlertTriangle, ShoppingCart,
-  FileText, DollarSign, Percent, Ruler, Building, Plus, Edit, X, Save, TrendingUp, RotateCcw, ScanLine
+  FileText, DollarSign, Percent, Ruler, Building, Plus, Edit, X, Save, TrendingUp, RotateCcw, ScanLine, Image as ImageIcon, Trash2, Upload
 } from 'lucide-react';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage, router } from '@inertiajs/react';
 import toast from 'react-hot-toast';
 import CommonModal from '@/Components/CommonModal';
 import CategoryManager from '@/Components/Inventory/CategoryManager';
@@ -97,6 +97,9 @@ const ProductForm = ({ productToEdit, onClose }) => {
     estado: 'Activo',
   });
 
+  const [imagenPreview, setImagenPreview] = useState(productToEdit?.imagen_url || null);
+  const [imagenFile, setImagenFile] = useState(null);
+
   // Sincronizar datos cuando el componente se monta o cambia el producto
   useEffect(() => {
     if (isEdit && productToEdit) {
@@ -105,8 +108,8 @@ const ProductForm = ({ productToEdit, onClose }) => {
             descripcion: productToEdit.descripcion || '',
             sku: productToEdit.sku || '',
             codigo_barras: productToEdit.codigo_barras || '',
-            stock: productToEdit.stock || 0,
-            stock_minimo: productToEdit.stock_minimo || 0,
+            stock: productToEdit.stock !== undefined && productToEdit.stock !== null ? parseInt(productToEdit.stock, 10) : 0,
+            stock_minimo: productToEdit.stock_minimo !== undefined && productToEdit.stock_minimo !== null ? parseInt(productToEdit.stock_minimo, 10) : 0,
             precio_compra: productToEdit.precio_compra !== undefined ? productToEdit.precio_compra : '',
             margen_ganancia: productToEdit.margen_ganancia !== undefined ? productToEdit.margen_ganancia : '',
             precio_venta: productToEdit.precio_venta !== undefined ? productToEdit.precio_venta : '',
@@ -116,8 +119,12 @@ const ProductForm = ({ productToEdit, onClose }) => {
             marca_id: productToEdit.marca_id || '',
             estado: productToEdit.estado || 'Activo',
         });
+        setImagenPreview(productToEdit.imagen_url || null);
+        setImagenFile(null);
     } else if (!isEdit) {
         reset();
+        setImagenPreview(null);
+        setImagenFile(null);
     }
     clearErrors();
   }, [productToEdit, isEdit]);
@@ -136,19 +143,59 @@ const ProductForm = ({ productToEdit, onClose }) => {
     setData('precio_venta', precioFinal > 0 ? precioFinal.toFixed(2) : '0.00');
   }, [data.precio_compra, data.margen_ganancia, data.tasa_descuento]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImagenFile(file);
+      setImagenPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageRemove = () => {
+    if (isEdit && productToEdit?.imagen_url && !imagenFile) {
+      router.delete(route('productos.imagen.destroy', productToEdit.id), {
+        onSuccess: () => {
+          setImagenPreview(null);
+          toast.success('Imagen eliminada');
+        },
+        onError: () => toast.error('Error al eliminar la imagen'),
+      });
+    } else {
+      setImagenFile(null);
+      setImagenPreview(null);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     const options = {
         onSuccess: () => {
             toast.success(isEdit ? 'Producto actualizado' : 'Producto creado');
             if (onClose) onClose();
             else reset();
         },
-        onError: () => toast.error('Error al guardar el producto')
+        onError: (errs) => {
+            const firstError = Object.values(errs)[0];
+            toast.error(firstError || 'Error al guardar el producto');
+        }
     };
 
-    if (isEdit) {
+    if (imagenFile) {
+      const fd = new FormData();
+      fd.append('_method', isEdit ? 'PUT' : 'POST');
+      fd.append('imagen', imagenFile);
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          fd.append(key, value);
+        }
+      });
+
+      router.post(isEdit
+        ? route('productos.update', productToEdit.id)
+        : route('productos.store'), fd, options
+      );
+    } else if (isEdit) {
       put(route('productos.update', productToEdit.id), options);
     } else {
       post(route('productos.store'), options);
@@ -255,8 +302,8 @@ const ProductForm = ({ productToEdit, onClose }) => {
               <FormDisplay label="Ganancia Neta" value={`S/ ${gananciaNeta.toFixed(2)}`} icon={TrendingUp} />
               <FormDisplay label="Precio de Venta Final" value={`S/ ${data.precio_venta}`} className="sm:col-span-2 text-indigo-600" />
               
-              <FormInput label="Stock Actual" type="number" value={data.stock} onChange={e => setData('stock', e.target.value)} icon={ShoppingCart} error={errors.stock} required />
-              <FormInput label="Stock Mínimo (Alerta)" type="number" value={data.stock_minimo} onChange={e => setData('stock_minimo', e.target.value)} icon={AlertTriangle} error={errors.stock_minimo} />
+              <FormInput label="Stock Actual" type="number" step="1" value={data.stock} onChange={e => setData('stock', e.target.value ? parseInt(e.target.value, 10) : '')} icon={ShoppingCart} error={errors.stock} required />
+              <FormInput label="Stock Mínimo (Alerta)" type="number" step="1" value={data.stock_minimo} onChange={e => setData('stock_minimo', e.target.value ? parseInt(e.target.value, 10) : '')} icon={AlertTriangle} error={errors.stock_minimo} />
             </FormSection>
           </div>
 
@@ -293,20 +340,35 @@ const ProductForm = ({ productToEdit, onClose }) => {
               </FormSelectWithButtons>
             </FormSection>
 
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex gap-3 items-start">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                    <AlertTriangle size={18} />
-                </div>
-                <div>
-                    <p className="text-xs font-bold text-amber-800 uppercase tracking-tight">Nota del Sistema</p>
-                    <p className="text-[10px] text-amber-700 leading-tight mt-0.5">El almacenamiento de imágenes está desactivado para optimizar el rendimiento de la base de datos.</p>
-                </div>
-            </div>
+            <FormSection title="Imagen del Producto" icon={ImageIcon} gridCols="grid-cols-1">
+              <div className="flex flex-col items-center gap-4">
+                {imagenPreview ? (
+                  <div className="relative w-full aspect-square max-w-[200px] mx-auto rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50">
+                    <img src={imagenPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleImageRemove}
+                      className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow hover:bg-rose-50 text-rose-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full aspect-square max-w-[200px] mx-auto border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-all group">
+                    <Upload size={32} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                    <span className="mt-2 text-xs font-bold text-slate-400 group-hover:text-indigo-500 transition-colors">Subir Imagen</span>
+                    <span className="text-[10px] text-slate-300">PNG, JPG, WEBP · Max 2MB</span>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                  </label>
+                )}
+                {errors.imagen && <p className="text-xs text-red-500">{errors.imagen}</p>}
+              </div>
+            </FormSection>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button type="button" onClick={() => { reset(); clearErrors(); }} className="h-11 px-6 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <button type="button" onClick={() => { reset(); clearErrors(); setImagenPreview(null); }} className="h-11 px-6 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2">
               <RotateCcw size={18} /> Limpiar
             </button>
             <button type="submit" disabled={processing} className="h-11 px-8 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-100 flex items-center gap-2 disabled:opacity-50">

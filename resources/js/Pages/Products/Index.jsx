@@ -32,8 +32,12 @@ const ProductRow = React.memo(({ product, onEdit, onToggleStatus, onOpenUnits, o
       </td>
       <td className="p-4 whitespace-nowrap">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-            <Package size={20} />
+          <div className="w-10 h-10 rounded-lg bg-slate-50 overflow-hidden flex items-center justify-center text-slate-400 border border-slate-100">
+            {product.imagen_url ? (
+              <img src={product.imagen_url} alt={product.nombre} className="w-full h-full object-cover" />
+            ) : (
+              <Package size={20} />
+            )}
           </div>
           <div className="max-w-[250px]">
             <div className={`font-bold text-slate-800 truncate ${!isActive ? 'line-through' : ''}`} title={product.nombre}>{product.nombre}</div>
@@ -48,7 +52,7 @@ const ProductRow = React.memo(({ product, onEdit, onToggleStatus, onOpenUnits, o
       </td>
       <td className="p-4 whitespace-nowrap text-center">
         <div className="flex flex-col items-center">
-            <span className="font-bold text-slate-900">{product.stock}</span>
+            <span className="font-bold text-slate-900">{parseInt(product.stock, 10)}</span>
             <span className="text-[10px] text-slate-400 uppercase font-bold">{product.unidad_medida}</span>
         </div>
       </td>
@@ -199,7 +203,7 @@ export default function Index({ productos, categorias, marcas }) {
       p.sku || '---',
       p.nombre,
       p.categoria?.nombre || 'General',
-      p.stock,
+      parseInt(p.stock, 10),
       `S/ ${parseFloat(p.precio_venta).toFixed(2)}`,
       p.estado
     ]);

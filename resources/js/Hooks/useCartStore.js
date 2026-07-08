@@ -32,7 +32,7 @@ export const useCartStore = create(
               quantity: 1,
               unit_id: unitId,
               unit_name: unit ? unit.unidad.nombre : product.unidad_medida,
-              image: product.imagen_producto,
+              image: product.imagen_url,
               stock_base: product.stock,
               factor: unit ? parseFloat(unit.factor) : 1,
               conversion_id: conversionId

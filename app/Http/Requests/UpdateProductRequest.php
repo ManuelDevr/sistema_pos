@@ -31,6 +31,7 @@ class UpdateProductRequest extends FormRequest
             'categoria_id' => 'required|exists:categorias,id',
             'marca_id' => 'nullable|exists:marcas,id',
             'estado' => 'required|in:Activo,Inactivo',
+            'imagen' => 'nullable|image|max:2048',
         ];
     }
 }

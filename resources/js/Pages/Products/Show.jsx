@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronLeft, ShoppingCart, Package, Info, CheckCircle2, AlertTriangle, XCircle, Tag, Ruler, Archive, Layers, Bookmark } from 'lucide-react';
+import { ChevronLeft, ShoppingCart, Package, Image as ImageIcon, Info, CheckCircle2, AlertTriangle, XCircle, Tag, Ruler, Archive, Layers, Bookmark } from 'lucide-react';
 import ProductCard from '@/Components/Products/ProductCard';
 import { useCartStore } from '@/Hooks/useCartStore';
 import toast from 'react-hot-toast';
@@ -76,7 +76,11 @@ export default function Show({ producto, similares }) {
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-2">
           {/* Image Side */}
           <div className="bg-slate-50 flex items-center justify-center p-12 border-r border-slate-100 relative">
-            <Package size={200} className="text-slate-200" />
+            {producto.imagen_url ? (
+              <img src={producto.imagen_url} alt={producto.nombre} className="w-full h-full max-h-[400px] object-contain" />
+            ) : (
+              <ImageIcon size={200} className="text-slate-200" />
+            )}
             <div className={`absolute top-6 right-6 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border flex items-center gap-2 ${status.color}`}>
                 <status.icon size={14} />
                 {status.label}
