@@ -19,6 +19,9 @@ class PermissionSeeder extends Seeder
             'gestionar_usuarios',
             'configuracion_sistema',
             'configurar_privilegios',
+            'ver_catalogo',
+            'ver_kardex',
+            'gestionar_mantenimiento',
         ];
 
         // Administrador: Todos los permisos activos por defecto
@@ -40,6 +43,9 @@ class PermissionSeeder extends Seeder
             'gestionar_usuarios' => false,
             'configuracion_sistema' => false,
             'configurar_privilegios' => false,
+            'ver_catalogo' => true,
+            'ver_kardex' => false,
+            'gestionar_mantenimiento' => false,
         ];
 
         foreach ($cajeroPermissions as $perm => $allowed) {
