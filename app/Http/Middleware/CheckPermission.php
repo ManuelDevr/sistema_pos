@@ -40,9 +40,10 @@ class CheckPermission
                 return response()->json(['message' => 'No tienes permiso para realizar esta acción.'], 403);
             }
             
-            return redirect()->route('dashboard')->with('error', "Acceso denegado: No tienes el privilegio para realizar esta acción ($permission).");
+            return redirect()->route('login')->with('error', "Acceso denegado: No tienes el privilegio para realizar esta acción ($permission).");
         }
 
         return $next($request);
     }
 }
+

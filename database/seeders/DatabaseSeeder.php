@@ -15,6 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            PermissionSeeder::class,
+            SunatUnitSeeder::class,
+        ]);
+
         // Usuario Administrador
         User::create([
             'name' => 'Mirtha Almeyda Boza',
