@@ -4,10 +4,11 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Search, Filter, ArrowUpCircle, ArrowDownCircle, ClipboardList, Calendar, User, Package, Image as ImageIcon, Download, X } from 'lucide-react';
 import Pagination from '@/Components/Pagination';
 import toast from 'react-hot-toast';
-import { generateProfessionalPDF } from '@/Utils/pdfGenerator';
+import { generateEnhancedPDF } from '@/Utils/pdfGenerator';
+import logoSrc from '@/Assets/Logo.jpg';
 
 export default function Kardex({ movimientos, productos, filters }) {
-    const { config } = usePage().props;
+    const { auth, config } = usePage().props;
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(filters.producto_id || '');
     const [selectedType, setSelectedType] = useState(filters.tipo || 'TODOS');
@@ -51,7 +52,7 @@ export default function Kardex({ movimientos, productos, filters }) {
         router.get(route('kardex.index'));
     };
 
-    const exportToPDF = () => {
+    const exportToPDF = async () => {
         const headers = ['Fecha', 'Producto', 'Tipo', 'Motivo', 'Cant.', 'Stock Ant.', 'Stock Post.'];
         const body = filteredMovimientos.map(m => [
             new Date(m.created_at).toLocaleString(),
@@ -63,13 +64,30 @@ export default function Kardex({ movimientos, productos, filters }) {
             parseInt(m.stock_actual, 10)
         ]);
 
-        generateProfessionalPDF({
-            title: 'Kardex Permanente de Unidades Físicas',
+        const productoNombre = selectedProduct
+            ? productos.find(p => p.id === parseInt(selectedProduct))?.nombre || '---'
+            : 'Todos los productos';
+
+        const tipoLabels = { TODOS: 'Todos los movimientos', ENTRADA: 'Solo Entradas', SALIDA: 'Solo Salidas' };
+
+        let fechaVal = new Date().toLocaleString();
+        if (startDate || endDate) {
+            fechaVal = `${startDate || '...'} al ${endDate || '...'}`;
+        }
+
+        await generateEnhancedPDF({
+            title: 'REPORTE DE KARDEX',
             filename: 'Kardex_Ferreteria_CMA',
             headers,
             body,
             config,
-            dateRange: startDate || endDate ? { start: startDate, end: endDate } : null
+            logoUrl: logoSrc,
+            metadata: {
+                fecha: fechaVal,
+                usuario: auth.user.name,
+                producto: productoNombre,
+                tipo: tipoLabels[selectedType],
+            },
         });
         toast.success('Reporte Kardex generado');
     };

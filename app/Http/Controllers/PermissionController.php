@@ -6,28 +6,14 @@ use App\Models\PermisoRol;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 
 class PermissionController extends Controller
 {
-    private $availablePermissions = [
-        ['key' => 'ver_dashboard', 'label' => 'Ver Dashboard'],
-        ['key' => 'ver_catalogo', 'label' => 'Ver Catálogo de Productos'],
-        ['key' => 'ver_kardex', 'label' => 'Ver Kardex Permanente'],
-        ['key' => 'gestionar_mantenimiento', 'label' => 'Gestionar Categorías y Marcas'],
-        ['key' => 'gestionar_productos', 'label' => 'Gestionar Productos'],
-        ['key' => 'gestionar_clientes', 'label' => 'Gestionar Clientes'],
-        ['key' => 'realizar_ventas', 'label' => 'Realizar Ventas (POS)'],
-        ['key' => 'ver_historial_ventas', 'label' => 'Ver Historial de Ventas'],
-        ['key' => 'anular_ventas', 'label' => 'Anular Ventas'],
-        ['key' => 'gestionar_usuarios', 'label' => 'Gestionar Usuarios'],
-        ['key' => 'configuracion_sistema', 'label' => 'Configuración de Empresa'],
-        ['key' => 'configurar_privilegios', 'label' => 'Configurar Privilegios'],
-    ];
-
     public function index()
     {
         return Inertia::render('Settings/Privileges', [
-            'availablePermissions' => $this->availablePermissions,
+            'availablePermissions' => self::getAllPermissions(),
             'permisosExistentes' => PermisoRol::all(),
         ]);
     }
@@ -48,12 +34,45 @@ class PermissionController extends Controller
             );
         }
 
-        // Limpiar caché de permisos solo para los roles que fueron modificados
         $rolesAfectados = collect($request->privilegios)->pluck('rol')->unique();
         foreach ($rolesAfectados as $rol) {
             Cache::forget("role_permissions_{$rol}");
         }
 
         return redirect()->route('privilegios.index')->with('success', 'Privilegios actualizados correctamente en todo el sistema.');
+    }
+
+    public static function getAllPermissions(): array
+    {
+        $labels = config('permissions', []);
+
+        $keys = [];
+        foreach (Route::getRoutes() as $route) {
+            $middleware = $route->getAction()['middleware'] ?? [];
+            foreach ((array)$middleware as $m) {
+                if (is_string($m) && str_starts_with($m, 'permission:')) {
+                    $keys[substr($m, strlen('permission:'))] = true;
+                }
+            }
+        }
+
+        $keys = array_keys($keys);
+        sort($keys);
+
+        return array_map(fn($key) => [
+            'key' => $key,
+            'label' => $labels[$key] ?? self::generateLabel($key),
+        ], $keys);
+    }
+
+    private static function generateLabel(string $key): string
+    {
+        $words = explode('_', $key);
+        $words = array_map(fn($w) => match ($w) {
+            'de', 'del', 'en', 'por', 'para', 'con', 'sin', 'y', 'a', 'e', 'o', 'u' => $w,
+            default => ucfirst($w),
+        }, $words);
+        $words[0] = ucfirst($words[0]);
+        return implode(' ', $words);
     }
 }

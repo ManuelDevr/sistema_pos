@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
-import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Login({ status, canResetPassword }) {
+    const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -76,15 +77,22 @@ export default function Login({ status, canResetPassword }) {
                         </div>
                         <input
                             id="password"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             name="password"
                             value={data.password}
-                            className="block w-full pl-12 pr-4 py-3.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-2xl text-slate-800 font-medium transition-all shadow-sm group-hover:bg-slate-100 focus:bg-white"
+                            className="block w-full pl-12 pr-12 py-3.5 bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-0 rounded-2xl text-slate-800 font-medium transition-all shadow-sm group-hover:bg-slate-100 focus:bg-white"
                             autoComplete="current-password"
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="••••••••"
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
                     <InputError message={errors.password} className="mt-2 ml-1" />
                 </div>

@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Categoria;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
+    public function index()
+    {
+        return Inertia::render('Categorias/Index', [
+            'categorias' => Categoria::with('children')->whereNull('parent_id')->orderBy('nombre')->get(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

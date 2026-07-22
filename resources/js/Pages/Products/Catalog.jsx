@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage, router } from '@inertiajs/react';
-import { Search, Filter, LayoutGrid, List, ChevronLeft, ChevronRight, Package, Bookmark } from 'lucide-react';
+import { Head, usePage, router, Link } from '@inertiajs/react';
+import { Search, LayoutGrid, List, Package, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '@/Components/Products/ProductCard';
-import Pagination from '@/Components/Pagination';
 import { useCartStore } from '@/Hooks/useCartStore';
+import { productRoute } from '@/Utils/slugify';
 import toast from 'react-hot-toast';
 
 export default function Catalog({ productos, categorias, marcas }) {
@@ -13,64 +13,130 @@ export default function Catalog({ productos, categorias, marcas }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(12);
+  const [sortBy, setSortBy] = useState('');
 
   const { addToCart } = useCartStore();
+  const searchTimeout = useRef(null);
 
-  // Obtener todos los IDs de categorías descendientes de forma recursiva
-  const getAllChildCategoryIds = (categoryId, categoryList) => {
-    let ids = [parseInt(categoryId)];
-    
-    const findAndAddChildren = (currentId, list) => {
-        for (const cat of list) {
-            if (cat.id === currentId) {
-                if (cat.children && cat.children.length > 0) {
-                    cat.children.forEach(child => {
-                        ids.push(child.id);
-                        findAndAddChildren(child.id, cat.children);
-                    });
-                }
-                break;
-            }
-            if (cat.children && cat.children.length > 0) {
-                findAndAddChildren(currentId, cat.children);
-            }
-        }
-    };
+  const productosData = productos.data || [];
+  const currentPage = productos.current_page || 1;
+  const lastPage = productos.last_page || 1;
+  const total = productos.total || 0;
 
-    findAndAddChildren(parseInt(categoryId), categoryList);
-    return ids;
+  const fetchProducts = (params = {}) => {
+    const query = {};
+    if (params.search ?? searchTerm) query.search = params.search ?? searchTerm;
+    if (params.category ?? selectedCategory) query.category = params.category ?? selectedCategory;
+    if (params.brand ?? selectedBrand) query.brand = params.brand ?? selectedBrand;
+    if (params.sort ?? sortBy) query.sort = params.sort ?? sortBy;
+    if (params.page) query.page = params.page;
+
+    router.get(route('catalogo-productos'), query, {
+      preserveState: true,
+      replace: true,
+    });
   };
 
-  const filteredProducts = useMemo(() => {
-    let categoryIds = [];
-    if (selectedCategory) {
-        categoryIds = getAllChildCategoryIds(selectedCategory, categorias);
-    }
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      fetchProducts({ search: value, page: 1 });
+    }, 400);
+  };
 
-    return productos.filter(p => {
-      const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                           (p.codigo_barras && p.codigo_barras.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesCategory = !selectedCategory || categoryIds.includes(p.categoria_id);
-      const matchesBrand = !selectedBrand || p.marca_id === parseInt(selectedBrand);
-      
-      return matchesSearch && matchesCategory && matchesBrand;
-    });
-  }, [productos, searchTerm, selectedCategory, selectedBrand, categorias]);
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setSelectedBrand('');
+    fetchProducts({ category: value, brand: '', page: 1 });
+  };
 
-  const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-  const currentProducts = useMemo(() => 
-    filteredProducts.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage),
-    [filteredProducts, currentPage, rowsPerPage]
-  );
+  const handleBrandChange = (value) => {
+    setSelectedBrand(value);
+    fetchProducts({ brand: value, page: 1 });
+  };
+
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    fetchProducts({ sort: value, page: 1 });
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > lastPage) return;
+    fetchProducts({ page });
+  };
+
+  // React a los params de la URL al montar
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get('search') || '';
+    const category = params.get('category') || '';
+    const brand = params.get('brand') || '';
+    const sort = params.get('sort') || '';
+    if (search) setSearchTerm(search);
+    if (category) setSelectedCategory(category);
+    if (brand) setSelectedBrand(brand);
+    if (sort) setSortBy(sort);
+  }, []);
 
   const handleAddToCart = (product) => {
     addToCart(product);
     toast.success(`${product.nombre} añadido al carrito`);
+  };
+
+  const renderPagination = () => {
+    if (lastPage <= 1) return null;
+
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(lastPage, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm px-6 py-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-500 font-bold">
+            {total} producto(s) — Pág. {currentPage} de {lastPage}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            {pages.map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePageChange(p)}
+                className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                  p === currentPage
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= lastPage}
+              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -78,9 +144,8 @@ export default function Catalog({ productos, categorias, marcas }) {
       <Head title="Catálogo de Productos" />
 
       <div className="space-y-6">
-        {/* Barra de Filtros Mejorada */}
+        {/* Barra de Filtros */}
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-4 items-center">
-            {/* Buscador */}
             <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
@@ -88,16 +153,15 @@ export default function Catalog({ productos, categorias, marcas }) {
                     className="w-full pl-12 pr-4 py-3 bg-slate-50 border-transparent focus:border-indigo-500 focus:ring-0 rounded-2xl text-sm font-bold shadow-inner"
                     placeholder="Buscar por nombre, SKU o código..."
                     value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                 />
             </div>
 
             <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-                {/* Filtro Categoría */}
                 <div className="relative flex-1 min-w-[200px]">
                     <select
                         value={selectedCategory}
-                        onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
+                        onChange={(e) => handleCategoryChange(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50 border-transparent focus:border-indigo-500 focus:ring-0 rounded-2xl text-sm font-bold text-slate-700 shadow-inner appearance-none"
                     >
                         <option value="">Todas las categorías</option>
@@ -114,11 +178,10 @@ export default function Catalog({ productos, categorias, marcas }) {
                     </select>
                 </div>
 
-                {/* Filtro Marca */}
                 <div className="relative flex-1 min-w-[180px]">
                     <select
                         value={selectedBrand}
-                        onChange={(e) => { setSelectedBrand(e.target.value); setCurrentPage(1); }}
+                        onChange={(e) => handleBrandChange(e.target.value)}
                         className="w-full px-4 py-3 bg-slate-50 border-transparent focus:border-indigo-500 focus:ring-0 rounded-2xl text-sm font-bold text-slate-700 shadow-inner appearance-none"
                     >
                         <option value="">Todas las marcas</option>
@@ -128,7 +191,18 @@ export default function Catalog({ productos, categorias, marcas }) {
                     </select>
                 </div>
 
-                {/* Botones de Vista (Grid/List) */}
+                <div className="relative flex-1 min-w-[160px]">
+                    <select
+                        value={sortBy}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border-transparent focus:border-indigo-500 focus:ring-0 rounded-2xl text-sm font-bold text-slate-700 shadow-inner appearance-none"
+                    >
+                        <option value="">Ordenar por</option>
+                        <option value="price_asc">Precio: Menor a Mayor</option>
+                        <option value="price_desc">Precio: Mayor a Menor</option>
+                    </select>
+                </div>
+
                 <div className="flex items-center gap-3">
                   <div className="flex items-center bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
                     <button 
@@ -152,12 +226,12 @@ export default function Catalog({ productos, categorias, marcas }) {
 
         {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {currentProducts.length > 0 ? currentProducts.map((product) => (
+                {productosData.length > 0 ? productosData.map((product) => (
                     <ProductCard 
                         key={product.id} 
                         product={product} 
                         onAdd={() => handleAddToCart(product)}
-                        onView={() => router.get(route('productos.show', product.id))}
+                        onView={() => router.get(productRoute(route, product))}
                     />
                 )) : (
                     <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
@@ -176,11 +250,11 @@ export default function Catalog({ productos, categorias, marcas }) {
                                 <th className="p-4">Categoría</th>
                                 <th className="p-4 text-center">Stock</th>
                                 <th className="p-4 text-right">Precio</th>
-                                <th className="p-4 text-right pr-6">Acción</th>
+                                <th className="p-4 text-center">Acción</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {currentProducts.map((product) => (
+                            {productosData.map((product) => (
                                 <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -208,14 +282,23 @@ export default function Catalog({ productos, categorias, marcas }) {
                                     <td className="p-4 text-right font-black text-slate-800">
                                         S/ {parseFloat(product.precio_venta).toFixed(2)}
                                     </td>
-                                    <td className="p-4 text-right pr-6">
-                                        <button 
-                                            onClick={() => handleAddToCart(product)}
-                                            disabled={product.stock <= 0}
-                                            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md shadow-indigo-100 disabled:bg-slate-300"
-                                        >
-                                            Añadir
-                                        </button>
+                                    <td className="p-4 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                          <button 
+                                              onClick={() => router.get(productRoute(route, product))}
+                                              className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                              title="Ver detalle"
+                                          >
+                                              <Eye size={16} />
+                                          </button>
+                                          <button 
+                                              onClick={() => handleAddToCart(product)}
+                                              disabled={product.stock <= 0}
+                                              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md shadow-indigo-100 disabled:bg-slate-300"
+                                          >
+                                              Añadir
+                                          </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -225,16 +308,7 @@ export default function Catalog({ productos, categorias, marcas }) {
             </div>
         )}
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}
-                totalRecords={filteredProducts.length}
-            />
-        </div>
+        {renderPagination()}
       </div>
     </AuthenticatedLayout>
   );

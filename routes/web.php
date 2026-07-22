@@ -9,9 +9,15 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\KardexController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\CompraController;
+use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\NotaCreditoController;
+use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -55,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:ver_catalogo')
         ->name('catalogo-productos');
 
-    Route::get('/producto/{producto}', [ProductController::class, 'show'])
+    Route::get('/producto/{producto}/{slug?}', [ProductController::class, 'show'])
         ->middleware('permission:ver_catalogo')
         ->name('productos.show');
 
@@ -69,6 +75,14 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:gestionar_mantenimiento')
         ->name('inventory.maintenance');
 
+    // Ajustes de Inventario
+    Route::get('/inventario/ajustes', [InventoryController::class, 'adjustments'])
+        ->middleware('permission:gestionar_mantenimiento')
+        ->name('inventory.adjustments');
+    Route::post('/inventario/ajustes', [InventoryController::class, 'storeAdjustment'])
+        ->middleware('permission:gestionar_mantenimiento')
+        ->name('inventory.adjustments.store');
+
     // Clientes
     Route::get('/gestion-clientes', [ClientController::class, 'index'])
         ->middleware('permission:gestionar_clientes')
@@ -80,7 +94,35 @@ Route::middleware(['auth'])->group(function () {
 
     // --- RUTAS DE ADMINISTRACIÓN ---
     Route::middleware(['admin'])->group(function () {
+
+        // Contabilidad y Reportes SIRE
+        Route::get('/reportes/rvie', [ReportController::class, 'rvie'])->middleware('permission:ver_reporte_rvie')->name('reportes.rvie');
+        Route::get('/reportes/rvie/export', [ReportController::class, 'exportRvie'])->middleware('permission:ver_reporte_rvie')->name('reportes.rvie.export');
+        Route::get('/reportes/rce', [ReportController::class, 'rce'])->middleware('permission:ver_reporte_rce')->name('reportes.rce');
+        Route::get('/reportes/rce/export', [ReportController::class, 'exportRce'])->middleware('permission:ver_reporte_rce')->name('reportes.rce.export');
         
+        // Proveedores
+        Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permission:gestionar_mantenimiento')->name('proveedores.index');
+        Route::post('/proveedores', [ProveedorController::class, 'store'])->middleware('permission:gestionar_mantenimiento')->name('proveedores.store');
+        Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->middleware('permission:gestionar_mantenimiento')->name('proveedores.update');
+        Route::patch('/proveedores/{proveedor}/toggle', [ProveedorController::class, 'toggleStatus'])->middleware('permission:gestionar_mantenimiento')->name('proveedores.toggle');
+
+        // Notas de Crédito
+        Route::get('/notas-credito', [NotaCreditoController::class, 'index'])->middleware('permission:ver_historial_ventas')->name('notas-credito.index');
+        Route::get('/notas-credito/nueva', [NotaCreditoController::class, 'create'])->middleware('permission:anular_ventas')->name('notas-credito.create');
+        Route::post('/notas-credito', [NotaCreditoController::class, 'store'])->middleware('permission:anular_ventas')->name('notas-credito.store');
+
+        // Cotizaciones / Proformas
+        Route::get('/cotizaciones', [CotizacionController::class, 'index'])->middleware('permission:gestionar_productos')->name('cotizaciones.index');
+        Route::get('/cotizaciones/nueva', [CotizacionController::class, 'create'])->middleware('permission:gestionar_productos')->name('cotizaciones.create');
+        Route::post('/cotizaciones', [CotizacionController::class, 'store'])->middleware('permission:gestionar_productos')->name('cotizaciones.store');
+        Route::post('/cotizaciones/{cotizacion}/convert', [CotizacionController::class, 'convert'])->middleware('permission:realizar_ventas')->name('cotizaciones.convert');
+
+        // Compras
+        Route::get('/compras', [CompraController::class, 'index'])->middleware('permission:gestionar_productos')->name('compras.index');
+        Route::get('/compras/nueva', [CompraController::class, 'create'])->middleware('permission:gestionar_productos')->name('compras.create');
+        Route::post('/compras', [CompraController::class, 'store'])->middleware('permission:gestionar_productos')->name('compras.store');
+
         // Productos e Inventario
         Route::get('/gestion-productos', [ProductController::class, 'index'])->middleware('permission:gestionar_productos')->name('gestion-productos');
         Route::post('/productos', [ProductController::class, 'store'])->middleware('permission:gestionar_productos')->name('productos.store');
@@ -91,17 +133,27 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/conversiones/{conversion}', [ProductController::class, 'updateConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.update');
         Route::patch('/conversiones/{conversion}/toggle', [ProductController::class, 'toggleStatusConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.toggle');
         Route::delete('/conversiones/{conversion}', [ProductController::class, 'destroyConversion'])->middleware('permission:gestionar_productos')->name('productos.conversiones.destroy');
+        Route::post('/productos/importar-excel', [ProductController::class, 'importExcel'])->middleware('permission:gestionar_productos')->name('productos.import-excel');
+        Route::get('/productos/plantilla-excel', [ProductController::class, 'downloadSampleExcel'])->middleware('permission:gestionar_productos')->name('productos.sample-excel');
 
         // Mantenimiento
+        Route::get('/marcas', [BrandController::class, 'index'])->middleware('permission:gestionar_mantenimiento')->name('marcas.index');
         Route::post('/marcas', [BrandController::class, 'store'])->middleware('permission:gestionar_mantenimiento')->name('marcas.store');
         Route::put('/marcas/{marca}', [BrandController::class, 'update'])->middleware('permission:gestionar_mantenimiento')->name('marcas.update');
         Route::patch('/marcas/{marca}/toggle', [BrandController::class, 'toggleStatus'])->middleware('permission:gestionar_mantenimiento')->name('marcas.toggle');
+        Route::get('/categorias', [CategoryController::class, 'index'])->middleware('permission:gestionar_mantenimiento')->name('categorias.index');
         Route::post('/categorias', [CategoryController::class, 'store'])->middleware('permission:gestionar_mantenimiento')->name('categorias.store');
         Route::put('/categorias/{categoria}', [CategoryController::class, 'update'])->middleware('permission:gestionar_mantenimiento')->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle', [CategoryController::class, 'toggleStatus'])->middleware('permission:gestionar_mantenimiento')->name('categorias.toggle');
+        Route::get('/unidades', [UnitController::class, 'index'])->middleware('permission:gestionar_mantenimiento')->name('unidades.index');
         Route::post('/unidades', [UnitController::class, 'store'])->middleware('permission:gestionar_mantenimiento')->name('unidades.store');
         Route::put('/unidades/{unidad}', [UnitController::class, 'update'])->middleware('permission:gestionar_mantenimiento')->name('unidades.update');
         Route::patch('/unidades/{unidad}/toggle', [UnitController::class, 'toggleStatus'])->middleware('permission:gestionar_mantenimiento')->name('unidades.toggle');
+
+        // Grupo de Personal
+        Route::get('/grupo-personal', function () { return Inertia\Inertia::render('Personal/Grupo'); })->middleware('permission:gestionar_usuarios')->name('grupo-personal.index');
+        // Horarios
+        Route::get('/horarios', function () { return Inertia\Inertia::render('Personal/Horarios'); })->middleware('permission:gestionar_usuarios')->name('horarios.index');
 
         // Usuarios
         Route::get('/gestion-usuarios', [UserController::class, 'index'])->middleware('permission:gestionar_usuarios')->name('gestion-usuarios');
@@ -112,6 +164,11 @@ Route::middleware(['auth'])->group(function () {
         // Configuración y Privilegios
         Route::get('/configuracion', [SettingController::class, 'index'])->middleware('permission:configuracion_sistema')->name('configuracion');
         Route::post('/configuracion', [SettingController::class, 'update'])->middleware('permission:configuracion_sistema')->name('configuracion.update');
+        Route::get('/sucursales', [SucursalController::class, 'index'])->middleware('permission:gestionar_sucursales')->name('sucursales.index');
+        Route::post('/sucursales', [SucursalController::class, 'store'])->middleware('permission:gestionar_sucursales')->name('sucursales.store');
+        Route::put('/sucursales/{sucursal}', [SucursalController::class, 'update'])->middleware('permission:gestionar_sucursales')->name('sucursales.update');
+        Route::patch('/sucursales/{sucursal}/toggle', [SucursalController::class, 'toggle'])->middleware('permission:gestionar_sucursales')->name('sucursales.toggle');
+        Route::delete('/sucursales/{sucursal}', [SucursalController::class, 'destroy'])->middleware('permission:gestionar_sucursales')->name('sucursales.destroy');
         
         Route::get('/configuracion/privilegios', [PermissionController::class, 'index'])->middleware('permission:configurar_privilegios')->name('privilegios.index');
         Route::post('/configuracion/privilegios', [PermissionController::class, 'update'])->middleware('permission:configurar_privilegios')->name('privilegios.update');

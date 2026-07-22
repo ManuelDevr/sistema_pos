@@ -4,15 +4,30 @@ import Header from '@/Components/Header';
 import { Toaster } from 'react-hot-toast';
 
 export default function AuthenticatedLayout({ children }) {
-    const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+    const [isSidebarOpen, setSidebarOpen] = useState(() => {
+        const saved = localStorage.getItem('sidebarOpen');
+        if (saved !== null) return saved === 'true';
+        return window.innerWidth > 1024;
+    });
+
+    const toggleSidebar = () => {
+        setSidebarOpen(prev => {
+            const next = !prev;
+            if (!isMobile) localStorage.setItem('sidebarOpen', next);
+            return next;
+        });
+    };
 
     useEffect(() => {
         const handleResize = () => {
             const mobile = window.innerWidth <= 1024;
             setIsMobile(mobile);
             if (mobile) setSidebarOpen(false);
-            else setSidebarOpen(true);
+            else {
+                const saved = localStorage.getItem('sidebarOpen');
+                setSidebarOpen(saved !== null ? saved === 'true' : true);
+            }
         };
 
         window.addEventListener('resize', handleResize);
@@ -45,7 +60,7 @@ export default function AuthenticatedLayout({ children }) {
                 }`}
             >
                 {/* Header */}
-                <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+                <Header toggleSidebar={toggleSidebar} />
 
                 {/* Page Content */}
                 <main className="flex-1 p-4 sm:p-6 lg:p-8">

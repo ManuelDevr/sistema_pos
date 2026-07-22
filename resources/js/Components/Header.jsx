@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { usePage, Link, router } from '@inertiajs/react';
-import { FaUserCircle, FaBell, FaSignOutAlt, FaTrash, FaBars } from 'react-icons/fa';
+import { FaUserCircle, FaBell, FaSignOutAlt, FaTrash, FaBars, FaUser, FaStore, FaChevronDown } from 'react-icons/fa';
 import { ShoppingCart, AlertTriangle, XCircle, Package, Plus, Minus, X } from 'lucide-react';
 import { useCartStore } from '@/Hooks/useCartStore';
 import CommonModal from './CommonModal';
@@ -25,6 +25,18 @@ const Header = ({ toggleSidebar }) => {
 
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [isCartOpen, setCartOpen] = useState(false);
+  const [isUserMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const { items, updateQuantity, removeFromCart, clearCart, getTotal, getCount } = useCartStore();
 
@@ -55,21 +67,21 @@ const Header = ({ toggleSidebar }) => {
   return (
     <>
       <header className="sticky top-0 z-30 h-[70px] bg-white/80 backdrop-blur-lg border-b border-slate-200 transition-colors duration-300">
-        <div className="flex items-center justify-between h-full px-4 sm:px-6">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between h-full px-3 sm:px-4">
+          <div className="flex items-center gap-2 min-w-0 shrink">
             <button 
                 onClick={toggleSidebar}
-                className="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden"
+                className="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden shrink-0"
             >
-                <FaBars size={20} />
+                <FaBars size={18} />
             </button>
-            <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-slate-800 leading-tight">{pageTitle}</h1>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sistema de Gestión CMA</p>
+            <div className="hidden sm:block min-w-0">
+                <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-tight truncate">{pageTitle}</h1>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sistema de Gestión CMA</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <IconButton 
                 icon={FaBell} 
                 badgeCount={notifications?.length || 0} 
@@ -83,24 +95,57 @@ const Header = ({ toggleSidebar }) => {
                 onClick={() => setCartOpen(true)} 
             />
             
-            <div className="w-px h-8 bg-slate-200 mx-1 hidden xs:block"></div>
+            <div className="w-px h-6 bg-slate-200 mx-0.5 hidden sm:block"></div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-100 flex-shrink-0">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="hidden lg:block">
-                <p className="text-sm font-bold text-slate-800 leading-tight truncate max-w-[120px]">{user?.name || 'Usuario'}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{user?.rol}</p>
-              </div>
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 hover:bg-slate-50 rounded-xl px-2 py-1.5 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-100 shrink-0 text-sm">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden xl:block text-left">
+                  <p className="text-sm font-bold text-slate-800 leading-tight truncate max-w-[100px]">{user?.name || 'Usuario'}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{user?.rol}</p>
+                </div>
+                <FaChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Link
+                    href={route('profile.edit')}
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all w-full"
+                  >
+                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                      <FaUser size={14} />
+                    </div>
+                    Perfil
+                  </Link>
+                  <button
+                    onClick={() => { setUserMenuOpen(false); /* placeholder */ }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all w-full"
+                  >
+                    <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                      <FaStore size={14} />
+                    </div>
+                    Mi Tienda web
+                  </button>
+                  <div className="h-px bg-slate-100 my-1" />
+                  <button
+                    onClick={() => router.post(route('logout'))}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-rose-600 hover:bg-rose-50 transition-all w-full"
+                  >
+                    <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                      <FaSignOutAlt size={14} />
+                    </div>
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
-
-            <IconButton 
-                icon={FaSignOutAlt} 
-                onClick={() => router.post(route('logout'))} 
-                title="Cerrar Sesión"
-                colorClass="bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600"
-            />
           </div>
         </div>
       </header>

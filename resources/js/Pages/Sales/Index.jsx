@@ -6,7 +6,8 @@ import CommonModal from '@/Components/CommonModal';
 import SaleDetailModal from '@/Components/Sales/SaleDetailModal';
 import Pagination from '@/Components/Pagination';
 import toast from 'react-hot-toast';
-import { generateProfessionalPDF } from '@/Utils/pdfGenerator';
+import { generateEnhancedPDF } from '@/Utils/pdfGenerator';
+import logoSrc from '@/Assets/Logo.jpg';
 
 const getStatusBadge = (status) => {
   const styles = {
@@ -71,7 +72,7 @@ const SaleRow = React.memo(({ sale, onOpenDetail }) => {
 });
 
 export default function Index({ ventas }) {
-  const { config } = usePage().props;
+  const { auth, config } = usePage().props;
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -104,7 +105,7 @@ export default function Index({ ventas }) {
     setDetailModalOpen(true);
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const headers = ['Nro', 'Cliente', 'Fecha', 'Pago', 'Estado', 'Total'];
     const body = filteredSales.map(s => [
       s.nro_comprobante,
@@ -115,12 +116,22 @@ export default function Index({ ventas }) {
       `S/ ${parseFloat(s.total).toFixed(2)}`
     ]);
 
-    generateProfessionalPDF({
-        title: `Reporte de Ventas ${startDate ? `Desde: ${startDate}` : ''} ${endDate ? `Hasta: ${endDate}` : ''}`,
+    let fechaVal = new Date().toLocaleString();
+    if (startDate || endDate) {
+      fechaVal = `${startDate || '...'} al ${endDate || '...'}`;
+    }
+
+    await generateEnhancedPDF({
+        title: 'REPORTE DE VENTAS',
         filename: 'Ventas_Ferreteria_CMA',
         headers,
         body,
-        config
+        config,
+        logoUrl: logoSrc,
+        metadata: {
+            fecha: fechaVal,
+            usuario: auth.user.name,
+        },
     });
     toast.success('Reporte generado');
   };

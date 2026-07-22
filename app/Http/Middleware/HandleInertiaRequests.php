@@ -66,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error'),
+                'warning' => session('warning'),
                 'last_sale' => session('last_sale_id') ? \App\Models\Venta::with([
                     'cliente:id,nombre,ruc_dni,direccion',
                     'user:id,name',

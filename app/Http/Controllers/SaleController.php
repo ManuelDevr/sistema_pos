@@ -118,8 +118,14 @@ class SaleController extends Controller
             $nextNum = $lastNro ? ((int) substr($lastNro, strlen($serie) + 1)) + 1 : 1;
             $nro_comprobante = $serie . '-' . str_pad($nextNum, 6, '0', STR_PAD_LEFT);
 
+            $igvRate = (float) (Configuracion::first()?->igv ?? 18.00);
+            $baseImponible = round($totalBackend / (1 + $igvRate / 100), 2);
+            $igvAmount = round($totalBackend - $baseImponible, 2);
+
             $venta = Venta::create([
                 'total' => $totalBackend,
+                'base_imponible' => $baseImponible,
+                'igv' => $igvAmount,
                 'metodo_pago' => $request->metodo_pago,
                 'user_id' => auth()->id(),
                 'cliente_id' => $request->cliente_id,
