@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { 
   FaHome, FaList, 
   FaMoneyBillWave, FaUsers, FaUserFriends, 
   FaChevronLeft, FaChevronRight, FaPlus,
-  FaShoppingCart, FaBolt, FaTimes, FaShieldAlt
+  FaBolt, FaTimes, FaShieldAlt
 } from 'react-icons/fa';
-import { Settings, Box, Search, LayoutGrid, ClipboardList, Layers, History, ShieldCheck, Building2, ChevronDown, ChevronRight, Package, ShoppingBag, Settings2 } from 'lucide-react';
+import { Settings, Box, Search, LayoutGrid, ClipboardList, Layers, History, ShieldCheck, Building2, ChevronDown, ChevronRight, Package, ShoppingCart, ShoppingBag, Settings2, AlertTriangle, FileText, TrendingUp, Receipt, Store, Bookmark, Ruler, Clock } from 'lucide-react';
 import Logo from '@/Assets/Logo.jpg';
 
 const NavItem = ({ item, isOpen, isMobile, setOpen, isSubItem = false }) => {
@@ -32,22 +32,38 @@ const NavItem = ({ item, isOpen, isMobile, setOpen, isSubItem = false }) => {
 };
 
 const CollapsibleSection = ({ section, isOpen, isMobile, setOpen }) => {
-    const [isCollapsed, setIsCollapsed] = useState(true);
-    const [showFloating, setShowFloating] = useState(false);
     const { auth } = usePage().props;
     const permissions = auth.permissions || [];
-
     const visibleItems = section.items.filter(item => !item.permission || permissions.includes(item.permission));
+    const hasActiveItem = visibleItems.some(item => item.routeName ? route().current(item.routeName) : false);
+    const [isCollapsed, setIsCollapsed] = useState(!hasActiveItem);
+    const [showFloating, setShowFloating] = useState(false);
+    const hideTimer = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (hideTimer.current) clearTimeout(hideTimer.current);
+        };
+    }, []);
 
     if (visibleItems.length === 0) return null;
+
+    const handleMouseEnter = () => {
+        if (hideTimer.current) clearTimeout(hideTimer.current);
+        setShowFloating(true);
+    };
+
+    const handleMouseLeave = () => {
+        hideTimer.current = setTimeout(() => setShowFloating(false), 100);
+    };
 
     // --- MODO COLAPSADO: Menú Flotante TIPO POPOVER (CLARO) ---
     if (!isOpen && !isMobile) {
         return (
             <div 
                 className="relative flex flex-col items-center py-2"
-                onMouseEnter={() => setShowFloating(true)}
-                onMouseLeave={() => setShowFloating(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
             >
                 <button 
                     onClick={() => setShowFloating(!showFloating)}
@@ -160,8 +176,9 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
         icon: Package,
         items: [
             { icon: Box, label: 'Gestión de Productos', routeName: 'gestion-productos', permission: 'gestionar_productos' },
-            { icon: ClipboardList, label: 'Kardex', routeName: 'kardex.index', permission: 'ver_kardex' },
-            { icon: Layers, label: 'Categorías y Marcas', routeName: 'inventory.maintenance', permission: 'gestionar_mantenimiento' }
+            { icon: Layers, label: 'Categorías', routeName: 'categorias.index', permission: 'gestionar_mantenimiento' },
+            { icon: Bookmark, label: 'Marcas', routeName: 'marcas.index', permission: 'gestionar_mantenimiento' },
+            { icon: Ruler, label: 'Unidad de medidas', routeName: 'unidades.index', permission: 'gestionar_mantenimiento' }
         ]
     },
     { 
@@ -169,8 +186,38 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
         title: 'Ventas', 
         icon: ShoppingBag,
         items: [
-            { icon: History, label: 'Historial de Ventas', routeName: 'gestion-ventas', permission: 'ver_historial_ventas' },
-            // { icon: FaUserFriends, label: 'Clientes', routeName: 'gestion-clientes', permission: 'gestionar_clientes' },
+            { icon: History, label: 'Historial de ventas', routeName: 'gestion-ventas', permission: 'ver_historial_ventas' },
+            { icon: FileText, label: 'Cotización', routeName: 'cotizaciones.index', permission: 'gestionar_productos' },
+        ]
+    },
+    { 
+        type: 'section',
+        title: 'Contabilidad', 
+        icon: FileText,
+        items: [
+            { icon: TrendingUp, label: 'Reporte de venta', routeName: 'reportes.rvie', permission: 'ver_reporte_rvie' },
+            { icon: Receipt, label: 'Reporte de compra', routeName: 'reportes.rce', permission: 'ver_reporte_rce' },
+            { icon: AlertTriangle, label: 'Ajuste de stock', routeName: 'inventory.adjustments', permission: 'gestionar_mantenimiento' },
+            { icon: ClipboardList, label: 'Kardex', routeName: 'kardex.index', permission: 'ver_kardex' },
+        ]
+    },
+    { 
+        type: 'section',
+        title: 'Clientes y proveedores', 
+        icon: FaUserFriends,
+        items: [
+            { icon: FaUserFriends, label: 'Clientes', routeName: 'gestion-clientes', permission: 'gestionar_clientes' },
+            { icon: Building2, label: 'Proveedores', routeName: 'proveedores.index', permission: 'gestionar_mantenimiento' },
+        ]
+    },
+    { 
+        type: 'section',
+        title: 'Personal', 
+        icon: FaUsers,
+        items: [
+            { icon: FaUsers, label: 'Grupo de personal', routeName: 'grupo-personal.index', permission: 'gestionar_usuarios' },
+            { icon: FaUsers, label: 'Usuarios', routeName: 'gestion-usuarios', permission: 'gestionar_usuarios' },
+            { icon: Clock, label: 'Horarios', routeName: 'horarios.index', permission: 'gestionar_usuarios' },
         ]
     },
     { 
@@ -178,8 +225,8 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
         title: 'Configuraciones', 
         icon: Settings2,
         items: [
-            { icon: FaUsers, label: 'Usuarios / Personal', routeName: 'gestion-usuarios', permission: 'gestionar_usuarios' },
-            { icon: Building2, label: 'Datos de Empresa', routeName: 'configuracion', permission: 'configuracion_sistema' },
+            { icon: Building2, label: 'Datos de empresa', routeName: 'configuracion', permission: 'configuracion_sistema' },
+            { icon: Store, label: 'Sucursales', routeName: 'sucursales.index', permission: 'gestionar_sucursales' },
             { icon: ShieldCheck, label: 'Privilegios', routeName: 'privilegios.index', permission: 'configurar_privilegios' }
         ]
     }
@@ -228,7 +275,7 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
                             >
                                 <element.icon size={22} />
                             </Link>
-                            <div className="absolute left-full ml-2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-800 uppercase tracking-widest">
+                            <div className="absolute left-full ml-2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-800 uppercase tracking-widest transition-all duration-200 delay-150">
                                 {element.label}
                             </div>
                         </div>

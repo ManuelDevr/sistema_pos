@@ -15,9 +15,19 @@ class Configuracion extends Model
         'direccion',
         'telefono',
         'metodos_pago',
+        'certificado_digital',
+        'sol_usuario',
+        'sol_clave',
+        'entorno',
+        'serie_factura',
+        'serie_boleta',
+        'serie_nota_credito',
+        'serie_nota_debito',
+        'igv',
     ];
 
     protected $casts = [
         'metodos_pago' => 'array',
+        'igv' => 'decimal:2',
     ];
 }

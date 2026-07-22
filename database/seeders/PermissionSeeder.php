@@ -4,48 +4,36 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\PermisoRol;
+use App\Http\Controllers\PermissionController;
 
 class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $permissions = [
-            'ver_dashboard',
-            'gestionar_productos',
-            'gestionar_clientes',
-            'realizar_ventas',
-            'ver_historial_ventas',
-            'anular_ventas',
-            'gestionar_usuarios',
-            'configuracion_sistema',
-            'configurar_privilegios',
-        ];
+        $permissions = PermissionController::getAllPermissions();
+        $keys = array_column($permissions, 'key');
 
-        // Administrador: Todos los permisos activos por defecto
-        foreach ($permissions as $perm) {
+        // Administrador: todos activos por defecto
+        foreach ($keys as $perm) {
             PermisoRol::updateOrCreate(
                 ['rol' => 'Administrador', 'permiso' => $perm],
                 ['permitido' => true]
             );
         }
 
-        // Cajero: Permisos limitados por defecto
-        $cajeroPermissions = [
+        // Cajero: permisos limitados (nuevos permisos se heredan como false)
+        $cajeroDefaults = [
             'ver_dashboard' => true,
-            'gestionar_productos' => false,
+            'ver_catalogo' => true,
             'gestionar_clientes' => true,
             'realizar_ventas' => true,
             'ver_historial_ventas' => true,
-            'anular_ventas' => false,
-            'gestionar_usuarios' => false,
-            'configuracion_sistema' => false,
-            'configurar_privilegios' => false,
         ];
 
-        foreach ($cajeroPermissions as $perm => $allowed) {
+        foreach ($keys as $perm) {
             PermisoRol::updateOrCreate(
                 ['rol' => 'Cajero', 'permiso' => $perm],
-                ['permitido' => $allowed]
+                ['permitido' => $cajeroDefaults[$perm] ?? false]
             );
         }
     }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage, router, Link } from '@inertiajs/react';
-import { Search, Edit, Filter, FileDown, ToggleLeft, ToggleRight, Scale, Plus, Package, AlertTriangle, CheckCircle, XCircle, Barcode, X } from 'lucide-react';
+import { Search, Edit, Filter, FileDown, ToggleLeft, ToggleRight, Scale, Plus, Package, AlertTriangle, CheckCircle, XCircle, Barcode, X, TrendingUp, Upload } from 'lucide-react';
 import CommonModal from '@/Components/CommonModal';
 import ProductForm from '@/Components/Products/ProductForm';
 import ProductUnitManager from '@/Components/Products/ProductUnitManager';
@@ -9,7 +9,8 @@ import Pagination from '@/Components/Pagination';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
-import { generateProfessionalPDF } from '@/Utils/pdfGenerator';
+import { generateEnhancedPDF } from '@/Utils/pdfGenerator';
+import logoSrc from '@/Assets/Logo.jpg';
 
 const getStatusInfo = (stock, stockMinimo) => {
   if (stock <= 0) return { text: 'Agotado', color: 'text-red-600 bg-red-50 border-red-100', icon: XCircle };
@@ -89,8 +90,14 @@ const ProductRow = React.memo(({ product, onEdit, onToggleStatus, onOpenUnits, o
 });
 
 export default function Index({ productos, categorias, marcas }) {
-  const { auth, config } = usePage().props;
+  const { auth, config, flash } = usePage().props;
   const isAdmin = auth.user.rol === 'Administrador';
+
+  useEffect(() => {
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
+    if (flash?.warning) toast(flash.warning, { icon: '⚠️', style: { background: '#fef3c7', color: '#92400e' } });
+  }, [flash]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -99,11 +106,29 @@ export default function Index({ productos, categorias, marcas }) {
   
   const [isModalOpen, setModalOpen] = useState(false);
   const [isUnitModalOpen, setUnitModalOpen] = useState(false);
+  const [isImportModalOpen, setImportModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedProductForUnits, setSelectedProductForUnits] = useState(null);
+  const [importFile, setImportFile] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const totalProductos = productos.length;
+  const stockTotal = productos.reduce((sum, p) => sum + parseFloat(p.stock || 0), 0);
+  const capitalInvertido = productos.reduce((sum, p) => sum + parseFloat(p.stock || 0) * parseFloat(p.precio_compra || 0), 0);
+  const valorVenta = productos.reduce((sum, p) => sum + parseFloat(p.stock || 0) * parseFloat(p.precio_venta || 0), 0);
+  const productoCaro = productos.reduce((max, p) => parseFloat(p.precio_venta || 0) > parseFloat(max.precio_venta || 0) ? p : max, productos[0] || { nombre: '---', precio_venta: 0 });
+
+  const summaryCards = [
+    { title: 'Total de Productos', value: totalProductos.toLocaleString(), color: 'text-fuchsia-600' },
+    { title: 'Stock Total', value: stockTotal.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: 'text-emerald-600' },
+    { title: 'Capital Invertido', value: `S/ ${capitalInvertido.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-amber-600' },
+    { title: 'Valor Venta', value: `S/ ${valorVenta.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-green-600' },
+    { title: 'Valor Venta Mayor', value: `S/ ${valorVenta.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-blue-600' },
+    { title: 'Producto más caro', value: productoCaro.nombre, subtext: `S/ ${parseFloat(productoCaro.precio_venta || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-red-600' },
+  ];
 
   const filteredProducts = useMemo(() => {
     return productos.filter(p => {
@@ -185,7 +210,7 @@ export default function Index({ productos, categorias, marcas }) {
     window.open(doc.output('bloburl'), '_blank');
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     let categoryName = 'General';
     if (selectedCategory) {
         categorias.forEach(cat => {
@@ -214,19 +239,19 @@ export default function Index({ productos, categorias, marcas }) {
         'EMPTY': 'Sin Stock / Agotados'
     };
 
-    const titleWithExtra = [
-        `Inventario de Productos`,
-        `Categoría: ${categoryName}`,
-        `Nivel de stock: ${stockLabels[stockFilter]}`,
-        `Usuario: ${auth.user.name}`
-    ].join(' | ');
-
-    generateProfessionalPDF({
-        title: titleWithExtra,
+    await generateEnhancedPDF({
+        title: 'REPORTE DE INVENTARIO',
         filename: `Inventario_CMA_${categoryName.replace(/\s+/g, '_')}`,
         headers,
         body,
-        config
+        config,
+        logoUrl: logoSrc,
+        metadata: {
+            fecha: new Date().toLocaleString(),
+            usuario: auth.user.name,
+            categoria: categoryName,
+            nivelStock: stockLabels[stockFilter]
+        }
     });
     toast.success('Reporte generado');
   };
@@ -234,6 +259,22 @@ export default function Index({ productos, categorias, marcas }) {
   return (
     <AuthenticatedLayout>
       <Head title="Gestión de Productos" />
+
+      <div className="bg-white shadow-sm rounded-2xl border border-slate-200 p-5 sm:p-6 mb-6">
+        <div className="flex items-center gap-2 mb-5">
+          <TrendingUp size={20} className="text-indigo-500" />
+          <h2 className="text-base font-bold text-slate-900">Resumen de Productos</h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+          {summaryCards.map((card) => (
+            <div key={card.title} className="min-w-[160px] flex-1 snap-start bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">{card.title}</p>
+              <div className={`text-xl sm:text-2xl font-black ${card.color} leading-tight`}>{card.value}</div>
+              {card.subtext && <p className="text-xs text-slate-400 mt-1.5">{card.subtext}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="bg-white shadow-sm rounded-2xl border border-slate-200 flex flex-col min-h-[600px] overflow-hidden">
         <header className="px-6 py-5 border-b border-slate-100 bg-slate-50/30">
@@ -256,6 +297,14 @@ export default function Index({ productos, categorias, marcas }) {
               >
                 <FileDown size={18} className="text-emerald-600" />
                 <span>Exportar Catálogo</span>
+              </button>
+
+              <button 
+                onClick={() => setImportModalOpen(true)} 
+                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-all shadow-sm font-bold text-sm group"
+              >
+                <Upload size={18} className="text-indigo-600" />
+                <span>Importar Excel</span>
               </button>
 
               <button 
@@ -382,6 +431,111 @@ export default function Index({ productos, categorias, marcas }) {
             product={selectedProductForUnits} 
             onClose={() => setUnitModalOpen(false)} 
         />
+      </CommonModal>
+
+      <CommonModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => { setImportModalOpen(false); setImportFile(null); }} 
+        title="Importar Productos desde Excel"
+        maxWidth="lg"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!importFile) { toast.error('Selecciona un archivo Excel'); return; }
+            setIsImporting(true);
+            router.post(route('productos.import-excel'), { file: importFile }, {
+              onSuccess: () => {
+                setImportModalOpen(false);
+                setImportFile(null);
+                setIsImporting(false);
+              },
+              onError: (err) => {
+                toast.error(err.file?.[0] || 'Error al importar');
+                setIsImporting(false);
+              },
+              onFinish: () => setIsImporting(false),
+              preserveScroll: true,
+            });
+          }}
+          className="space-y-5"
+        >
+          <div className="text-center">
+            <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 mx-auto mb-4">
+              <Upload size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">Subir archivo Excel</h3>
+            <p className="text-sm text-slate-500 mt-1">Formatos aceptados: .xlsx, .xls, .csv</p>
+          </div>
+
+          <div className="relative">
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={(e) => setImportFile(e.target.files[0] || null)}
+              className="hidden"
+              id="excel-file-input"
+            />
+            <label
+              htmlFor="excel-file-input"
+              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                importFile
+                  ? 'border-indigo-400 bg-indigo-50/50'
+                  : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50/30'
+              }`}
+            >
+              {importFile ? (
+                <div className="text-center">
+                  <FileDown size={28} className="text-indigo-500 mx-auto mb-1" />
+                  <p className="text-sm font-bold text-indigo-700">{importFile.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{(importFile.size / 1024).toFixed(1)} KB</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Upload size={28} className="text-slate-400 mx-auto mb-1" />
+                  <p className="text-sm font-bold text-slate-600">Haz clic o arrastra un archivo</p>
+                  <p className="text-xs text-slate-400 mt-0.5">.xlsx, .xls o .csv</p>
+                </div>
+              )}
+            </label>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1">
+            <p className="font-bold text-amber-900 mb-1">Columnas requeridas en el Excel:</p>
+            <p><strong>nombre</strong>, <strong>sku</strong>, <strong>descripcion</strong>, <strong>precio_compra</strong>, <strong>precio_venta</strong>, <strong>stock</strong>, <strong>stock_minimo</strong>, <strong>categoria</strong>, <strong>marca</strong>, <strong>unidad_medida</strong></p>
+            <p className="text-amber-600 mt-2">* categoría y marca deben coincidir exactamente con los nombres registrados en el sistema</p>
+            <p className="text-amber-600">* código de barras e imagen no se importan por Excel</p>
+            <a
+              href={route('productos.sample-excel')}
+              className="inline-flex items-center gap-1.5 mt-2 text-indigo-600 hover:text-indigo-800 font-bold"
+              target="_blank"
+            >
+              <FileDown size={14} />
+              Descargar plantilla de ejemplo
+            </a>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setImportModalOpen(false); setImportFile(null); }}
+              className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl font-bold text-sm transition-all border border-slate-200"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={!importFile || isImporting}
+              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isImporting ? (
+                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Importando...</>
+              ) : (
+                <><Upload size={16} /> Importar Productos</>
+              )}
+            </button>
+          </div>
+        </form>
       </CommonModal>
     </AuthenticatedLayout>
   );

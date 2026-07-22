@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Unidad;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UnitController extends Controller
 {
+    public function index()
+    {
+        return Inertia::render('Unidades/Index', [
+            'unidades' => Unidad::orderBy('nombre')->get(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

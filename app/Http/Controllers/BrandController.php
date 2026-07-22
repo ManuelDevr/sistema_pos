@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Marca;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class BrandController extends Controller
 {
+    public function index()
+    {
+        return Inertia::render('Marcas/Index', [
+            'marcas' => Marca::orderBy('nombre')->get(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

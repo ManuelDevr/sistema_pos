@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProductSampleExport;
+use App\Imports\ProductsImport;
 use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\Marca;
@@ -11,6 +13,7 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -30,14 +33,42 @@ class ProductController extends Controller
         ]);
     }
 
-    public function catalog()
+    public function catalog(Request $request)
     {
+        $query = Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
+            ->with(['marca:id,nombre', 'categoria:id,nombre'])
+            ->where('estado', 'Activo');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'ilike', "%{$search}%")
+                  ->orWhere('sku', 'ilike', "%{$search}%")
+                  ->orWhere('codigo_barras', 'ilike', "%{$search}%");
+            });
+        }
+
+        if ($category = $request->input('category')) {
+            $categoryIds = [$category];
+            $children = Categoria::where('parent_id', $category)->pluck('id')->toArray();
+            $categoryIds = array_merge($categoryIds, $children);
+            $query->whereIn('categoria_id', $categoryIds);
+        }
+
+        if ($brand = $request->input('brand')) {
+            $query->where('marca_id', $brand);
+        }
+
+        $sort = $request->input('sort');
+        if ($sort === 'price_asc') {
+            $query->orderBy('precio_venta');
+        } elseif ($sort === 'price_desc') {
+            $query->orderBy('precio_venta', 'desc');
+        } else {
+            $query->orderBy('nombre');
+        }
+
         return Inertia::render('Products/Catalog', [
-            'productos' => Producto::select('id', 'nombre', 'sku', 'codigo_barras', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
-                ->with(['marca:id,nombre', 'categoria:id,nombre'])
-                ->where('estado', 'Activo')
-                ->orderBy('nombre')
-                ->get(),
+            'productos' => $query->paginate(20)->withQueryString(),
             'categorias' => Categoria::select('id', 'nombre', 'parent_id')->with('children:id,nombre,parent_id')->whereNull('parent_id')->get(),
             'marcas' => Marca::select('id', 'nombre')->get(),
         ]);
@@ -164,5 +195,42 @@ class ProductController extends Controller
     {
         $conversion->delete();
         return redirect()->back()->with('success', 'Conversión eliminada.');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        $import = new ProductsImport();
+
+        try {
+            Excel::import($import, $request->file('file'));
+        } catch (\Exception $e) {
+            \Log::error('Error al importar Excel: ' . $e->getMessage(), [
+                'file' => $request->file('file')->getClientOriginalName(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Error al procesar el archivo: ' . $e->getMessage());
+        }
+
+        $errors = $import->getErrors();
+
+        if (empty($errors)) {
+            return redirect()->back()->with('success', 'Productos importados correctamente.');
+        }
+
+        $message = 'Importación completada con algunos errores:';
+        foreach ($errors as $error) {
+            $message .= ' | ' . $error;
+        }
+
+        return redirect()->back()->with('warning', $message);
+    }
+
+    public function downloadSampleExcel()
+    {
+        return Excel::download(new ProductSampleExport, 'plantilla_productos.xlsx');
     }
 }

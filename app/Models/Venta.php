@@ -10,12 +10,22 @@ class Venta extends Model
 {
     protected $fillable = [
         'total',
+        'base_imponible',
+        'igv',
         'metodo_pago',
         'nro_comprobante',
         'estado',
+        'sunat_envio',
         'user_id',
         'cliente_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'sunat_envio' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {

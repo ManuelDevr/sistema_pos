@@ -4,6 +4,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { ChevronLeft, ShoppingCart, Package, Image as ImageIcon, Info, CheckCircle2, AlertTriangle, XCircle, Tag, Ruler, Archive, Layers, Bookmark } from 'lucide-react';
 import ProductCard from '@/Components/Products/ProductCard';
 import { useCartStore } from '@/Hooks/useCartStore';
+import { productRoute } from '@/Utils/slugify';
 import toast from 'react-hot-toast';
 
 const getStockStatus = (stock, stockMinimo) => {
@@ -75,7 +76,7 @@ export default function Show({ producto, similares }) {
         {/* Main Product Section */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-2">
           {/* Image Side */}
-          <div className="bg-slate-50 flex items-center justify-center p-12 border-r border-slate-100 relative">
+          <div className="bg-white flex items-center justify-center p-6 border-r border-slate-100 relative min-h-[400px]">
             {producto.imagen_url ? (
               <img src={producto.imagen_url} alt={producto.nombre} className="w-full h-full max-h-[400px] object-contain" />
             ) : (
@@ -106,7 +107,7 @@ export default function Show({ producto, similares }) {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-slate-500 font-bold">
                         <Package size={16} className="text-emerald-500" />
-                        Stock Base: <span className="text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">{producto.stock} {producto.unidad_medida}</span>
+                        Stock Base: <span className="text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg">{parseInt(producto.stock, 10)} {producto.unidad_medida}</span>
                     </div>
                 </div>
             </div>
@@ -183,7 +184,7 @@ export default function Show({ producto, similares }) {
                   key={p.id}
                   product={p}
                   onAdd={() => { addToCart(p); toast.success('Añadido'); }}
-                  onView={() => router.get(route('productos.show', p.id))}
+                  onView={() => router.get(productRoute(route, p))}
                 />
               ))}
             </div>
