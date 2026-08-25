@@ -165,6 +165,12 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
     },
     { 
         type: 'item', 
+        icon: Store, 
+        label: 'Mi Tienda Web', 
+        routeName: 'store.index', 
+    },
+    { 
+        type: 'item', 
         icon: FaBolt, 
         label: 'Venta Rápida', 
         routeName: 'venta-rapida', 

@@ -124,15 +124,16 @@ const Header = ({ toggleSidebar }) => {
                     </div>
                     Perfil
                   </Link>
-                  <button
-                    onClick={() => { setUserMenuOpen(false); /* placeholder */ }}
+                  <Link
+                    href={route('store.index')}
+                    onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all w-full"
                   >
                     <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
                       <FaStore size={14} />
                     </div>
                     Mi Tienda web
-                  </button>
+                  </Link>
                   <div className="h-px bg-slate-100 my-1" />
                   <button
                     onClick={() => router.post(route('logout'))}

@@ -112,7 +112,7 @@ class SaleController extends Controller
             $serie = 'B001';
             $lastNro = Venta::lockForUpdate()
                 ->where('nro_comprobante', 'LIKE', $serie . '-%')
-                ->orderByRaw("CAST(SUBSTRING(nro_comprobante FROM " . (strlen($serie) + 2) . ") AS INTEGER) DESC")
+                ->orderByRaw("CAST(SUBSTR(nro_comprobante, " . (strlen($serie) + 2) . ") AS INTEGER) DESC")
                 ->value('nro_comprobante');
 
             $nextNum = $lastNro ? ((int) substr($lastNro, strlen($serie) + 1)) + 1 : 1;

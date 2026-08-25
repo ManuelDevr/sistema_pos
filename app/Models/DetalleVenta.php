@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DetalleVenta extends Model
 {
+    use HasFactory;
+
     protected $table = 'detalles_venta';
 
     protected $fillable = [

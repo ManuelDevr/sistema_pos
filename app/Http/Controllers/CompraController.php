@@ -70,15 +70,15 @@ class CompraController extends Controller
         $compra = Compra::create([
             'nro_comprobante' => $this->getNextNumber(),
             'proveedor' => $validated['proveedor'],
-            'ruc_dni' => $validated['ruc_dni'],
-            'direccion' => $validated['direccion'],
-            'telefono' => $validated['telefono'],
-            'email' => $validated['email'],
+            'ruc_dni' => $validated['ruc_dni'] ?? null,
+            'direccion' => $validated['direccion'] ?? null,
+            'telefono' => $validated['telefono'] ?? null,
+            'email' => $validated['email'] ?? null,
             'tipo_comprobante' => $validated['tipo_comprobante'],
             'subtotal' => $subtotal,
             'igv' => $igv,
             'total' => $total,
-            'observaciones' => $validated['observaciones'],
+            'observaciones' => $validated['observaciones'] ?? null,
             'user_id' => auth()->id(),
         ]);
 

@@ -178,6 +178,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Tienda Web ProLink Hardware
+    Route::get('/tienda-web', function () { return Inertia::render('Store/Index'); })->name('store.index');
+    Route::get('/tienda-web/catalogo', function () { return Inertia::render('Store/Catalog'); })->name('store.catalog');
+    Route::get('/tienda-web/producto/proseries-full-motion', function () { return Inertia::render('Store/Detail'); })->name('store.detail');
 });
 
 require __DIR__.'/auth.php';
