@@ -39,7 +39,7 @@ class ProductController extends Controller
         }
 
         return Inertia::render('Products/Index', [
-            'productos' => $query->paginate(25)->withQueryString(),
+            'productos' => $query->get(),
             'categorias' => Categoria::select('id', 'nombre', 'parent_id')->with('children:id,nombre,parent_id')->whereNull('parent_id')->get(),
             'marcas' => Marca::select('id', 'nombre')->get(),
             'unidades' => Unidad::select('id', 'nombre', 'abreviatura')->get(),
