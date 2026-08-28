@@ -1,150 +1,242 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import StoreHeader from '@/Components/StoreHeader';
+import StoreFooter from '@/Components/StoreFooter';
+import { formatStock } from '@/Utils/format';
 
-export default function StoreDetail() {
+export default function StoreDetail({ producto, similares, categorias }) {
   const [activeTab, setActiveTab] = useState('details');
-  const [includeService, setIncludeService] = useState(false);
   const [added, setAdded] = useState(false);
-  const [isProductsDropdownOpen, setIsProductsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const images = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDabqOmf96EA2ltZa3Y-bbc9GUKqOi6C3GoOLAui4hG5sMxah9bRW0tHUlHK8sAMHrsX_g8rjaysTuyvo7sNNZ3KeHUbxK8ZhvI4rCyyRLj9qB0bzU3vEXnWB0MGbD6jAey9UjSzIPiHGMfTnVcsQpPIr78z_ORnarJLaDXryKwHLloDIjOZd1iFWBYINaFz47_ua0YgjaFlvYi1e8GKcNbJJnjAgELWguv5N4zuPjRo7y0Y5DNbYTbqRyYX75wXUoidrTKswypnrU',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDXxqCbWdR_QUZhYvS4m37F30yyt_WqeQhGCsVEMmSobWrEB6zxJqndP2akkWC9QBMCaZtnSBUGi3-dKvZvkTeSEA4kcLr-sWOOdZsAfTBa8ATBfLqR-2Figjt5rus_YK4b6ggQkiaHESE7_IeiN5OT7M-g_hl3wVQBFRUw8G1vfhKe95MAkz8NjkrXwFCPFkIuBjuvuXKCVUqDg4SmP4rkrWA1ipbOJ95XW9-tHzD8Q3pA4AWcBdZM1orkvOIOsUngoCnP6NKOojI',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuAl8xHcuS9zrTe4l-yQcN36vb1_P_2dxMFysKpVx-vOMumecLEh2_vcTsV-Bj18NPKSCLxUQ-_-XD4tM8U6mRttHSHKP53KvDOu4y_oF7QphoHSBXs5nBeHkhVL_S9xxzDMu2BLMDSkbBxYgEeYqYb5SW8FpREhS42NFgxzHg30DFjYgR89VYCzMDWEVGUyu26A0FbKoxfS9-3QnMhQPCq8xjqpG4VvF2GhezUQYqUjuL-ZmHdSD6_kpvkSfeU86cfzmgwHqz5Wf-M',
-  ];
+  const [activeMedia, setActiveMedia] = useState(0);
+  const [favorited, setFavorited] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const thumbsRef = useRef(null);
 
-  const [selectedImg, setSelectedImg] = useState(0);
+  const imgUrl = producto?.imagen_url 
+    ? (producto.imagen_url.startsWith('http://') || producto.imagen_url.startsWith('https://') 
+        ? producto.imagen_url 
+        : `/storage/${producto.imagen_url}`)
+    : 'https://via.placeholder.com/500?text=Sin+Imagen';
+
+  // Coloca aquí el ID del video de YouTube cuando esté disponible (ej: 'dQw4w9WgXcQ')
+  const youtubeVideoId = '';
+
+  const galleryMedia = [{ type: 'image', url: imgUrl }];
+  if (youtubeVideoId) galleryMedia.push({ type: 'video' });
+  const activeSlide = galleryMedia[activeMedia];
+
+  const goMedia = (dir) => setActiveMedia((i) => (i + dir + galleryMedia.length) % galleryMedia.length);
+  const scrollThumbs = (dir) => {
+    if (thumbsRef.current) thumbsRef.current.scrollBy({ top: dir * 120, behavior: 'smooth' });
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = producto?.nombre || 'Producto CMA Store';
+    const text = `${title} - S/ ${parseFloat(producto?.precio_venta || 0).toFixed(2)} | CMA Store`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (e) {
+        /* cancelado */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      /* sin soporte */
+    }
+  };
+
+  const cat = producto?.categoria;
+  const topCat = cat?.parent ?? null;
+  const subCat = cat && cat.parent ? cat : null;
 
   const handleAddToCart = () => {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = route('store.catalog');
-    }
+  const relatedCarouselRef = useRef(null);
+  const scrollSlider = (ref, dir) => {
+    if (ref.current) ref.current.scrollBy({ left: dir * (ref.current.clientWidth * 0.8), behavior: 'smooth' });
   };
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans flex flex-col selection:bg-[#fea619]/30">
-      <Head title="ProSeries Full Motion TV Wall Mount | CMA Store">
+      <Head title={`${producto?.nombre || 'Producto'} | CMA Store`}>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </Head>
 
-      {/* Header */}
-      <header className="w-full sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-300">
-        <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16 gap-4">
-          <div className="flex items-center gap-8">
-            <Link href={route('store.index')} className="font-black text-xl text-black uppercase tracking-tight flex items-center gap-2 group shrink-0">
-              <span className="bg-[#fea619] text-black px-2 py-0.5 rounded text-sm group-hover:scale-105 transition-transform">CMA</span> 
-              <span className="group-hover:text-[#855300] transition-colors">STORE</span>
-            </Link>
-            
-            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
-              <Link href={route('store.index')} className="text-slate-600 hover:text-black hover:scale-105 transition-all">Inicio</Link>
-              
-              {/* Menú Desplegable "Productos" */}
-              <div 
-                className="relative py-2"
-                onMouseEnter={() => setIsProductsDropdownOpen(true)}
-                onMouseLeave={() => setIsProductsDropdownOpen(false)}
-              >
-                <Link 
-                  href={route('store.catalog')} 
-                  className="text-slate-700 hover:text-black flex items-center gap-1 hover:scale-105 transition-all"
-                >
-                  <span>Productos</span>
-                  <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${isProductsDropdownOpen ? 'rotate-180 text-[#855300]' : ''}`}>
-                    expand_more
-                  </span>
-                </Link>
-
-                {/* Submenú Dropdown */}
-                {isProductsDropdownOpen && (
-                  <div className="absolute top-full left-0 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5">Categorías</div>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">tv_gen</span>
-                      <span>Soportes & Racks TV</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">construction</span>
-                      <span>Ferretería Industrial</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">handyman</span>
-                      <span>Herramientas de Mano</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">electrical_services</span>
-                      <span>Electricidad</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">plumbing</span>
-                      <span>Fontanería & Tubos</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <span className="text-black font-bold border-b-2 border-[#fea619] pb-1 transition-all">Producto Destacado</span>
-            </nav>
-          </div>
-
-          {/* Buscador en el Navbar */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xs sm:max-w-md mx-2">
-            <div className="flex items-center bg-[#f2f4f6] px-3.5 py-1.5 rounded-xl border border-slate-300 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all shadow-sm">
-              <span className="material-symbols-outlined text-slate-400 text-[20px]">search</span>
-              <input 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none focus:outline-none focus:ring-0 text-xs sm:text-sm w-full pl-2 text-slate-800 placeholder-slate-400" 
-                placeholder="Buscar racks, herramientas, cables..." 
-                type="text" 
-              />
-            </div>
-          </form>
-
-          <div className="flex items-center gap-4 shrink-0">
-            <Link href={route('dashboard')} className="flex items-center gap-1.5 px-3 py-1.5 bg-black text-white rounded-lg text-xs font-bold hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-sm">
-              <span className="material-symbols-outlined text-sm">dashboard</span>
-              <span className="hidden sm:inline">Panel POS</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <StoreHeader categorias={categorias} />
 
       <main className="flex-grow max-w-[1280px] mx-auto px-6 py-8 w-full">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 mb-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
+        {/* Breadcrumb: Categoría / Subcategoría / Producto */}
+        <nav className="flex items-center flex-wrap gap-x-2 gap-y-1 mb-8 text-xs font-medium text-slate-400">
           <Link href={route('store.index')} className="hover:text-black transition-colors">Inicio</Link>
-          <span className="material-symbols-outlined text-sm">chevron_right</span>
-          <Link href={route('store.catalog')} className="hover:text-black transition-colors">Racks & Soportes</Link>
-          <span className="material-symbols-outlined text-sm">chevron_right</span>
-          <span className="text-black font-black">ProSeries Full Motion</span>
+          <span className="text-slate-300 select-none">/</span>
+          <Link href={route('store.catalog')} className="hover:text-black transition-colors">Productos</Link>
+          <span className="text-slate-300 select-none">/</span>
+          {topCat && (
+            <>
+              <Link href={route('store.catalog', { category: topCat.id })} className="hover:text-black transition-colors truncate max-w-[200px]">
+                {topCat.nombre}
+              </Link>
+              <span className="text-slate-300 select-none">/</span>
+            </>
+          )}
+          {subCat && (
+            <>
+              <Link href={route('store.catalog', { category: subCat.id })} className="hover:text-black transition-colors truncate max-w-[200px]">
+                {subCat.nombre}
+              </Link>
+              <span className="text-slate-300 select-none">/</span>
+            </>
+          )}
+          {cat && !cat.parent && (
+            <>
+              <Link href={route('store.catalog', { category: cat.id })} className="hover:text-black transition-colors truncate max-w-[200px]">
+                {cat.nombre}
+              </Link>
+              <span className="text-slate-300 select-none">/</span>
+            </>
+          )}
+          <span className="text-black font-black underline decoration-[#fea619] decoration-2 underline-offset-4">
+            {producto?.nombre || 'Detalle'}
+          </span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          {/* Galería Fotos */}
+          {/* Galería de Producto: Miniaturas + Visor Principal */}
           <div className="lg:col-span-7">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex md:flex-col order-2 md:order-1 gap-3 overflow-x-auto">
-                {images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImg(idx)}
-                    className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${selectedImg === idx ? 'border-black opacity-100 scale-105 shadow-md' : 'border-slate-200 opacity-60 hover:opacity-100 hover:scale-105'}`}
-                  >
-                    <img src={img} className="w-full h-full object-cover" alt="Thumb" />
-                  </button>
-                ))}
+            <div className="flex gap-4">
+              {/* Columna Izquierda: Miniaturas Verticales */}
+              <div className="flex flex-col items-center w-20 sm:w-24 shrink-0">
+                <button
+                  onClick={() => scrollThumbs(-1)}
+                  className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:bg-[#fea619]/10 hover:border-[#fea619]/40 transition-colors cursor-pointer mb-2"
+                  aria-label="Ver miniaturas anteriores"
+                >
+                  <span className="material-symbols-outlined text-base text-slate-500">expand_less</span>
+                </button>
+
+                <div ref={thumbsRef} className="flex flex-col gap-3 overflow-y-auto no-scrollbar max-h-[380px] pr-0.5">
+                  {galleryMedia.map((m, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveMedia(idx)}
+                      className={`relative w-full aspect-square rounded-lg overflow-hidden bg-white border transition-all cursor-pointer group/thumb ${
+                        activeMedia === idx ? 'border-[2.5px] border-black shadow-md' : 'border border-slate-200 hover:border-slate-400'
+                      }`}
+                    >
+                      {m.type === 'video' ? (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black">
+                          <span className="w-8 h-8 rounded-full bg-white/15 border border-white/25 flex items-center justify-center group-hover/thumb:bg-[#fea619] group-hover/thumb:border-[#fea619] transition-colors">
+                            <span className="material-symbols-outlined text-lg text-white group-hover/thumb:text-black">play_arrow</span>
+                          </span>
+                        </span>
+                      ) : (
+                        <img src={m.url} alt={`${producto?.nombre || 'Producto'} ${idx + 1}`} className="w-full h-full object-contain" />
+                      )}
+                      {activeMedia === idx && (
+                        <span className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-[#fea619]"></span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => scrollThumbs(1)}
+                  className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:bg-[#fea619]/10 hover:border-[#fea619]/40 transition-colors cursor-pointer mt-2"
+                  aria-label="Ver más miniaturas"
+                >
+                  <span className="material-symbols-outlined text-base text-slate-500">expand_more</span>
+                </button>
               </div>
-              <div className="flex-1 order-1 md:order-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm overflow-hidden flex items-center justify-center group">
-                <img src={images[selectedImg]} className="max-h-[450px] object-contain group-hover:scale-105 transition-transform duration-500" alt="Producto Principal" />
+
+              {/* Columna Derecha: Visor Principal */}
+              <div className="flex-1 relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center min-h-[400px]">
+                {activeSlide.type === 'video' ? (
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                    title={`Video - ${producto?.nombre || 'Producto'}`}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <img
+                    key={activeMedia}
+                    src={activeSlide.url}
+                    className="max-h-[400px] object-contain hover:scale-105 transition-transform duration-500 animate-in fade-in duration-300"
+                    alt={producto?.nombre}
+                  />
+                )}
+
+                {/* Botones flotantes: Corazón y Compartir */}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                  <button
+                    onClick={() => setFavorited(!favorited)}
+                    aria-label="Agregar a favoritos"
+                    className={`w-10 h-10 rounded-full bg-white border shadow-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer ${
+                      favorited ? 'border-[#fea619] text-[#ef4444]' : 'border-slate-200 text-slate-400 hover:text-[#ef4444]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-xl">{favorited ? 'favorite' : 'favorite_border'}</span>
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    aria-label="Compartir producto"
+                    className={`w-10 h-10 rounded-full bg-white border shadow-md flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer ${
+                      copied ? 'border-emerald-400 text-emerald-600' : 'border-slate-200 text-slate-400 hover:text-[#855300]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-xl">{copied ? 'check' : 'share'}</span>
+                  </button>
+                </div>
+
+                {galleryMedia.length > 1 && (
+                  <>
+                    {/* Flecha derecha: avanzar */}
+                    <button
+                      onClick={() => goMedia(1)}
+                      aria-label="Siguiente foto"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:border-[#fea619] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-xl font-bold text-black">chevron_right</span>
+                    </button>
+                    {/* Flecha izquierda: retroceder */}
+                    <button
+                      onClick={() => goMedia(-1)}
+                      aria-label="Foto anterior"
+                      className="absolute right-[68px] top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:border-[#fea619] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-xl font-bold text-black">chevron_left</span>
+                    </button>
+                  </>
+                )}
+
+                {/* Indicador de posición (dots) */}
+                {galleryMedia.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
+                    {galleryMedia.map((m, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveMedia(idx)}
+                        aria-label={`Ver foto ${idx + 1}`}
+                        className={`h-2 rounded-full transition-all cursor-pointer ${
+                          activeMedia === idx ? 'w-6 bg-[#fea619]' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                        }`}
+                      ></button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -153,60 +245,33 @@ export default function StoreDetail() {
           <div className="lg:col-span-5 flex flex-col gap-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="bg-[#fea619] text-black text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">Grado Profesional</span>
-                <div className="flex items-center text-[#fea619]">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className="material-symbols-outlined text-sm">star</span>
-                  ))}
-                  <span className="text-slate-500 text-xs font-bold ml-1">(124 Reseñas)</span>
-                </div>
+                {producto?.categoria?.nombre && (
+                  <span className="bg-[#fea619] text-black text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">{producto.categoria.nombre}</span>
+                )}
+                {producto?.marca?.nombre && (
+                  <span className="bg-black text-white text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">{producto.marca.nombre}</span>
+                )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-black mb-2">ProSeries Full Motion TV Wall Mount (37-75")</h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-black mb-2">{producto?.nombre}</h1>
               <p className="text-sm text-slate-500 leading-relaxed">
-                Articulación de doble brazo para montaje de alta estabilidad en pantallas de gran formato. Diseñado con precisión arquitectónica.
+                SKU: <span className="font-bold text-black">{producto?.sku || 'N/A'}</span> | Código de Barras: <span className="font-bold text-black">{producto?.codigo_barras || 'N/A'}</span>
               </p>
             </div>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-black transition-all">{includeService ? '$214.00' : '$129.00'}</span>
-              <span className="text-sm text-slate-400 line-through">$159.00</span>
+              <span className="text-3xl font-black text-black">S/ {parseFloat(producto?.precio_venta || 0).toFixed(2)}</span>
             </div>
 
             {/* Especificaciones Rápidas */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
-                <p className="font-bold text-slate-400 uppercase">Patrón VESA</p>
-                <p className="font-black text-black mt-0.5">200x200 a 600x400</p>
+              <div className="p-3 bg-white border border-slate-200 rounded-xl">
+                <p className="font-bold text-slate-400 uppercase">Stock Disponible</p>
+                <p className="font-black text-black mt-0.5">{formatStock(producto?.stock, producto?.unidad_medida)}</p>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
-                <p className="font-bold text-slate-400 uppercase">Peso Máximo</p>
-                <p className="font-black text-black mt-0.5">132 lbs (60 kg)</p>
+              <div className="p-3 bg-white border border-slate-200 rounded-xl">
+                <p className="font-bold text-slate-400 uppercase">Unidad Base</p>
+                <p className="font-black text-black mt-0.5">{producto?.unidad_medida || 'UN'}</p>
               </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
-                <p className="font-bold text-slate-400 uppercase">Inclinación</p>
-                <p className="font-black text-black mt-0.5">+5° / -15°</p>
-              </div>
-              <div className="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-400 transition-colors">
-                <p className="font-bold text-slate-400 uppercase">Giro Horizontal</p>
-                <p className="font-black text-black mt-0.5">180° Horizontal</p>
-              </div>
-            </div>
-
-            {/* Opción Servicio Instalación */}
-            <div
-              onClick={() => setIncludeService(!includeService)}
-              className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between shadow-sm hover:shadow-md ${includeService ? 'border-[#fea619] bg-[#fea619]/10 scale-[1.02]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#fea619] text-black rounded-lg flex items-center justify-center font-bold">
-                  <span className="material-symbols-outlined">build</span>
-                </div>
-                <div>
-                  <p className="font-bold text-sm text-black">Instalación Profesional Expert</p>
-                  <p className="text-xs text-[#855300] font-bold">Montaje + gestión oculta de cables</p>
-                </div>
-              </div>
-              <span className="font-black text-sm text-black">+ $85.00</span>
             </div>
 
             {/* Acciones */}
@@ -242,34 +307,140 @@ export default function StoreDetail() {
           {activeTab === 'details' ? (
             <div className="text-sm text-slate-600 space-y-3 leading-relaxed animate-in fade-in duration-300">
               <p>
-                El rack ProSeries Full Motion es el estándar de oro para instalaciones de pantallas grandes. Su diseño de doble brazo proporciona una estabilidad lateral sin igual mientras permite extender el TV hasta 24 pulgadas de la pared para una flexibilidad visual óptima.
+                {producto?.nombre} es un producto garantizado para ferretería e instalaciones de alta calidad.
               </p>
               <p>
-                Diseñado pensando en los contratistas, incluye una placa de pared abierta para fácil paso de cables y tomas eléctricas.
+                Categoría: <span className="font-bold text-black">{producto?.categoria?.nombre || 'General'}</span> | Marca: <span className="font-bold text-black">{producto?.marca?.nombre || 'Sin Marca'}</span>
               </p>
             </div>
           ) : (
             <div className="space-y-2 text-xs animate-in fade-in duration-300">
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Rango de Extensión</span>
-                <span className="font-bold text-black">2.8" - 24.2"</span>
+                <span className="text-slate-500">SKU</span>
+                <span className="font-bold text-black">{producto?.sku || 'N/A'}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Material</span>
-                <span className="font-bold text-black">Acero Forjado Reforzado</span>
+                <span className="text-slate-500">Código de Barras</span>
+                <span className="font-bold text-black">{producto?.codigo_barras || 'N/A'}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-500">Accesorios Incluidos</span>
-                <span className="font-bold text-black">Tornillería completa (Concreto/Madera)</span>
+                <span className="text-slate-500">Unidad de Medida</span>
+                <span className="font-bold text-black">{producto?.unidad_medida || 'UN'}</span>
               </div>
             </div>
           )}
         </section>
+
+        {/* Video del Producto */}
+        <section className="mt-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="inline-flex items-center gap-2 bg-[#fea619]/10 border border-[#fea619]/30 text-[#855300] text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+              <span className="material-symbols-outlined text-sm">play_circle</span>
+              Video
+            </span>
+            <h2 className="text-lg sm:text-xl font-black text-black">Video del Producto</h2>
+          </div>
+
+          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+            {youtubeVideoId ? (
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                title={`Video - ${producto?.nombre || 'Producto'}`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div className="text-center px-6 py-16">
+                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-4xl text-white/80">play_arrow</span>
+                </div>
+                <p className="text-white font-black text-lg mt-5">Video Disponible Próximamente</p>
+                <p className="text-slate-400 text-xs mt-2 max-w-xs mx-auto leading-relaxed">
+                  Estamos preparando un video explicativo para este producto. Vuelve pronto para verlo en acción.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Productos Relacionados */}
+        {similares.length > 0 && (
+          <section className="mt-10 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6 gap-4">
+              <div>
+                <span className="inline-flex items-center gap-2 bg-[#fea619]/10 border border-[#fea619]/30 text-[#855300] text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                  <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                  Productos Relacionados
+                </span>
+                <h2 className="text-lg sm:text-xl font-black text-black mt-2.5">
+                  Los clientes también vieron
+                </h2>
+              </div>
+              <Link
+                href={route('store.catalog', { category: producto?.categoria_id })}
+                className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all shrink-0"
+              >
+                Ver más <span className="material-symbols-outlined text-base">chevron_right</span>
+              </Link>
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => scrollSlider(relatedCarouselRef, -1)}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-xl font-bold text-black">chevron_left</span>
+              </button>
+
+              <div ref={relatedCarouselRef} className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2">
+                {similares.map((item) => {
+                  const imgUrl = item.imagen_url
+                    ? (item.imagen_url.startsWith('http://') || item.imagen_url.startsWith('https://')
+                      ? item.imagen_url
+                      : `/storage/${item.imagen_url}`)
+                    : 'https://via.placeholder.com/300?text=Sin+Imagen';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                    >
+                      <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                        <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={item.nombre} />
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {item.marca?.nombre || 'CMA'}
+                        </span>
+                      </div>
+                      <div className="p-5 flex flex-col flex-grow">
+                        <span className="text-xs font-bold text-[#855300] mb-1">SKU: {item.sku || 'N/A'}</span>
+                        <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{item.nombre}</h4>
+                        <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                        <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                          <span className="text-xl font-black text-black">S/ {parseFloat(item.precio_venta || 0).toFixed(2)}</span>
+                          <Link href={route('store.detail', item.id)} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => scrollSlider(relatedCarouselRef, 1)}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-xl font-bold text-black">chevron_right</span>
+              </button>
+            </div>
+          </section>
+        )}
       </main>
 
-      <footer className="bg-black text-white py-8 border-t border-slate-800 mt-12 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} CMA Hardware Store. Todos los derechos reservados.
-      </footer>
+      <StoreFooter />
     </div>
   );
 }

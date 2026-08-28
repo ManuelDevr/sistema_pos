@@ -1,70 +1,412 @@
-import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import StoreHeader from '@/Components/StoreHeader';
+import StoreFooter from '@/Components/StoreFooter';
+import { formatStock } from '@/Utils/format';
 
-export default function StoreCatalog() {
-  const [priceRange, setPriceRange] = useState(500);
-  const [isProductsDropdownOpen, setIsProductsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+const FILTER_THEMES = [
+  {
+    match: ['rack', 'soporte', 'soporte de tv', 'mount'],
+    hideSubcats: true,
+    attrSections: [
+      { key: 'montaje', label: 'Tipo de Montaje', options: ['Pared', 'Techo', 'Piso'] },
+      { key: 'pantalla', label: 'Tamaño de Pantalla', options: ['32"-55"', '65"-85"'] },
+      { key: 'carga', label: 'Capacidad de Carga', options: ['10 kg', '20 kg', '30 kg', '50 kg'] },
+      { key: 'vesa', label: 'Medida VESA', options: ['100x100', '200x200', '400x400', '800x400'] },
+    ],
+  },
+  {
+    match: ['convertidor', 'conversor', 'electronica', 'audio', 'video', 'tv', 'hdmi', 'digital', 'dvb', 'amplificador'],
+    hideSubcats: false,
+    attrSections: [
+      { key: 'resolucion', label: 'Resolución', options: ['HD', 'Full HD', '4K', '8K'] },
+      { key: 'digital', label: 'Producto digital', options: ['Digital', 'Analógico', 'Wi-Fi', 'Bluetooth'] },
+    ],
+  },
+];
 
-  const products = [
-    {
-      id: 1,
-      name: 'PL-Motion X900',
-      desc: 'Full Motion Dual Arm Mount (55-85")',
-      price: '$249.99',
-      tag: 'VESA Compatible',
-      service: true,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC9ObxIs7AdZCUtaooVBSoLljr2tRrxJklUXRxQBElKLaTx_SrH7ZRn7ybqPVXKY_mr2D7HD9JJkUSlNY2Pz5PoawCnqkh6jzSPEDk-VCN25T4VOkYyw1DzcoXRMOR4Yyzg6oa5OpV6co2THoNMLlvnEUjfZuW4NUq3CpdunYTxikXJlThEByxwyeJfN-NMfq8eE4hwIInzd_rRKDn021g1Ux-QpJx1Psywz3WV0MS6icScO1F9eqrEgRR_RHk-u75wbT4YWOyYaBw'
-    },
-    {
-      id: 2,
-      name: 'Ultra-Slim Fixed',
-      desc: 'Professional Grade Fixed Mount (32-55")',
-      price: '$89.00',
-      tag: 'Low Profile',
-      service: false,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCgnvWwG0ql1cr9imkhTM0tqYbrvGCPv6GcjYMOpEvMlxupb00r3T2gWOXbW6CqzdroQNfN-RQteaxOLycR1RCCltg_g1KtC4urayGeHILtqQ15wtiCFHRH6KsUoMw_eo7JW6FWqOheyyhM0VW9bRftem_jBoN5Cp_j-fAvgCY9x29EEu0x4DPXqoQg4u3CrlU7JVPE89kSzXosaD7zAObSPCP98T3dVaysF257WKSNtkTwav6YR62Ye4h7xiQ0Z62bkG_azzid6Aw'
-    },
-    {
-      id: 3,
-      name: 'Pro-Ceiling Articulate',
-      desc: 'Telescopic Ceiling Mount (40-75")',
-      price: '$315.50',
-      tag: 'Commercial',
-      service: true,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBfUpyVtrqfrI1q_82RIoFoh9Jev_B-B_RfVGEJx0nKe9c2pQBKkWso8Df-A_YMNRuVl4XIZMlkssEUcx-97YVFk9E67i9ZmE7KvZD40iR9B3G64vNk-Pknx7Y3c6o3mICUCrb1YOtBNs327x2SO100llai31Oh_fuwnT-q6jY9oPy4na3bkLeXRb6cuB4pNyWtxFecFphYyUkohK5_h-or9asrfdaHXgSiJ7Dsdv38iBKk1ZjcjAUtWox0SWyz2QuqmAE3Yb7un8I'
-    },
-    {
-      id: 4,
-      name: 'TiltMaster Pro',
-      desc: 'Precision Tilt Wall Mount (50-80")',
-      price: '$124.95',
-      tag: 'Tool-Less Adjustment',
-      service: false,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBZOH3cuk_N7rXnQpqHZaJSGPlMzcV5_PTdke56m11cDiYOxtdQPsZCOiJ5U5nwoZUQJI1ho-k57jA_LMowU1vMlefjyYOa2Ek9iYC7YdkYg-Mf8lXHSgFNFDwcopTByKi-3U3Wn9vcPHaT9sCA8upltVzf-A2F1-dJx_PzIxnxID8l8Q2hEUoU0JQBJY-EDjFfWGbwgKMPi2L_GmOGpE2A9-2kdmr68cmlw_SiQy7O-_tkAg5L6epZlCKj03EiTSSy1K_UjVTSZbk'
-    },
-    {
-      id: 5,
-      name: 'StackVertical Pro',
-      desc: 'Dual Vertical Display Rack',
-      price: '$412.00',
-      tag: 'Dual Screen',
-      service: false,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCE-JSwANeWYcXUUvYWBscVRzf5CfsAXfOQ_Q4gxz6LGQS6iG_xwR3go2uOPDZvLHRYNWgyPFSXJ3O2Hrc6slppFkzu9tL9sLPUZBha59HLqyN1isOn-6TxkhHqEImyYrWYT_S_xrO5TodTNW63L6iV8-JkQ9VC7YFyE0vd9UCIWrlC_BgOJhsHehmNLqhPbJ3WP1tUIeS1ZcVh7ZI8TkLURon16tEhBfBTcK-mljXk1WDlDgYZtV6LRbtyqPPoJpuQK8v_Evk06ng'
-    },
-    {
-      id: 6,
-      name: 'MotoLink Apex',
-      desc: 'Motorized Full-Motion (Up to 90")',
-      price: '$799.00',
-      tag: 'Motorized',
-      service: true,
-      img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDAQcnezVL1CyGqUIqr8DaWiqpv9w3F_JHm68ACHtQVZm1-ZwApNAxrgnRtAkLTSGWy2oJ5o9gc7ysct-tsRHspMy5kb70AzoPcp6Kik8Ai9gUU5mQXwA_xDlGvQGvQD_8titrxHGKUdssQn9il6uzGtvtUcA_4kRv0C0BWcN-M6RwQJIfxuGlPgMixE9sDVOhZuU5zoprY8KcfC_7eQmNBOLfI-PFNKGQg7LzJC__gklamBEojBAh97l6X04EaTzXHcHYUI2_4KaY'
+export default function StoreCatalog({ productos, categorias, marcas }) {
+  const [viewMode, setViewMode] = useState('grid');
+  const [openSections, setOpenSections] = useState({ categorias: true, marca: true, precio: true });
+  const [expandedCat, setExpandedCat] = useState(null);
+  const priceDebounce = useRef(null);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeSearch = urlParams.get('search') || '';
+  const activeCategory = urlParams.get('category') || '';
+  const activeBrand = urlParams.get('brand') || '';
+  const activeSort = urlParams.get('sort') || '';
+  const activeMinPrice = urlParams.get('min_price') || '';
+  const activeMaxPrice = urlParams.get('max_price') || '';
+
+  const activeAttrs = {};
+  urlParams.forEach((v, k) => {
+    const m = k.match(/^attrs\[(.+)\]$/);
+    if (m && v) activeAttrs[m[1]] = v;
+  });
+
+  const [searchQuery, setSearchQuery] = useState(activeSearch);
+  const [draftMin, setDraftMin] = useState(activeMinPrice);
+  const [draftMax, setDraftMax] = useState(activeMaxPrice);
+  const [sliderMax, setSliderMax] = useState(activeMaxPrice || 2000);
+
+  useEffect(() => {
+    setSearchQuery(activeSearch);
+    setDraftMin(activeMinPrice);
+    setDraftMax(activeMaxPrice);
+    setSliderMax(activeMaxPrice || 2000);
+  }, [activeSearch, activeMinPrice, activeMaxPrice]);
+
+  const productList = productos?.data || productos || [];
+
+  const activeFilters = {
+    search: activeSearch,
+    category: activeCategory,
+    brand: activeBrand,
+    sort: activeSort,
+    min_price: activeMinPrice,
+    max_price: activeMaxPrice,
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some((v) => v !== '') || Object.keys(activeAttrs).length > 0;
+
+  const findCategoryName = (id) => {
+    if (!categorias) return null;
+    for (const c of categorias) {
+      if (String(c.id) === String(id)) return c.nombre;
+      const sub = c.children?.find((ch) => String(ch.id) === String(id));
+      if (sub) return sub.nombre;
     }
-  ];
+    return null;
+  };
+
+  const activeCategoryName = findCategoryName(activeCategory);
+
+  const theme = activeCategoryName
+    ? FILTER_THEMES.find((t) => t.match.some((k) => activeCategoryName.toLowerCase().includes(k)))
+    : null;
+
+  const sections = [];
+  if (theme) {
+    theme.attrSections.forEach((s) => sections.push({ type: 'attrs', ...s }));
+    if (!theme.hideSubcats) sections.push({ type: 'cats', label: 'Sub-Categoría' });
+    sections.push({ type: 'brand', label: 'Marca' });
+    sections.push({ type: 'price', label: 'Gama de Precios' });
+  } else {
+    sections.push({ type: 'cats', label: 'Sub-Categoría' });
+    sections.push({ type: 'brand', label: 'Marca' });
+    sections.push({ type: 'price', label: 'Gama de Precios' });
+  }
+
+  const attrOptionLabel = (key, value) => {
+    const sec = theme?.attrSections.find((s) => s.key === key);
+    return sec ? `${sec.label}: ${value}` : `${key}: ${value}`;
+  };
+
+  const chips = [];
+  if (activeSearch) chips.push({ key: 'search', label: `Búsqueda: ${activeSearch}` });
+  if (activeCategory) chips.push({ key: 'category', label: activeCategoryName ? `Categoría: ${activeCategoryName}` : `Categoría: #${activeCategory}` });
+  if (activeBrand) chips.push({ key: 'brand', label: `Marca: ${marcas?.find((m) => String(m.id) === String(activeBrand))?.nombre || `#${activeBrand}`}` });
+  if (activeMinPrice) chips.push({ key: 'min_price', label: `Precio mín: S/ ${activeMinPrice}` });
+  if (activeMaxPrice) chips.push({ key: 'max_price', label: `Precio máx: S/ ${activeMaxPrice}` });
+  Object.entries(activeAttrs).forEach(([k, v]) => {
+    chips.push({ key: `attr_${k}`, label: attrOptionLabel(k, v) });
+  });
+
+  const applyFilters = (changes) => {
+    const q = { ...activeFilters, ...changes };
+    Object.keys(q).forEach((k) => {
+      if (q[k] === '' || q[k] === null || q[k] === undefined) delete q[k];
+      if (typeof q[k] === 'object' && Object.keys(q[k]).length === 0) delete q[k];
+    });
+    delete q.page;
+    router.get(route('store.catalog'), q, { preserveState: true, replace: true });
+  };
+
+  const toggleAttr = (sectionKey, option) => {
+    const next = { ...activeAttrs };
+    if (next[sectionKey] === option) delete next[sectionKey];
+    else next[sectionKey] = option;
+    applyFilters({ attrs: next });
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    applyFilters({ search: searchQuery.trim() });
+  };
+
+  const toggleCategory = (id) => {
+    applyFilters({ category: activeCategory === String(id) ? '' : String(id) });
+  };
+
+  const toggleExpandCat = (id) => {
+    setExpandedCat((prev) => (prev === id ? null : id));
+  };
+
+  const toggleBrand = (id) => {
+    applyFilters({ brand: activeBrand === String(id) ? '' : String(id) });
+  };
+
+  const handleSort = (e) => {
+    applyFilters({ sort: e.target.value });
+  };
+
+  const handleMinInput = (e) => {
+    const val = e.target.value;
+    setDraftMin(val);
+    clearTimeout(priceDebounce.current);
+    priceDebounce.current = setTimeout(() => {
+      applyFilters({ min_price: val });
+    }, 500);
+  };
+
+  const handleMaxInput = (e) => {
+    const val = e.target.value;
+    setDraftMax(val);
+    setSliderMax(val || 2000);
+    clearTimeout(priceDebounce.current);
+    priceDebounce.current = setTimeout(() => {
+      applyFilters({ max_price: val });
+    }, 500);
+  };
+
+  const handlePriceSlider = (e) => {
+    const val = e.target.value;
+    setSliderMax(val);
+    setDraftMax(val);
+    clearTimeout(priceDebounce.current);
+    priceDebounce.current = setTimeout(() => {
+      applyFilters({ max_price: val });
+    }, 300);
+  };
+
+  const removeFilter = (key) => {
+    if (key === 'category') return applyFilters({ category: '' });
+    if (key === 'brand') return applyFilters({ brand: '' });
+    if (key === 'search') {
+      setSearchQuery('');
+      return applyFilters({ search: '' });
+    }
+    if (key === 'min_price') {
+      setDraftMin('');
+      return applyFilters({ min_price: '' });
+    }
+    if (key === 'max_price') {
+      setDraftMax('');
+      setSliderMax(2000);
+      return applyFilters({ max_price: '' });
+    }
+    if (key.startsWith('attr_')) {
+      const attrKey = key.slice(5);
+      const next = { ...activeAttrs };
+      delete next[attrKey];
+      return applyFilters({ attrs: next });
+    }
+  };
+
+  const cleanFilters = () => {
+    setSearchQuery('');
+    setDraftMin('');
+    setDraftMax('');
+    setSliderMax(2000);
+    router.get(route('store.catalog'), {}, { preserveState: true, replace: true });
+  };
+
+  const toggleSection = (key) => {
+    setOpenSections((s) => ({ ...s, [key]: !s[key] }));
+  };
+
+  const goToPage = (page) => {
+    const q = { ...activeFilters };
+    Object.keys(q).forEach((k) => {
+      if (q[k] === '' || q[k] === null || q[k] === undefined) delete q[k];
+    });
+    router.get(route('store.catalog'), { ...q, page }, { preserveState: true, replace: false });
+  };
+
+  const currentPrice = (item) => parseFloat(item.precio_venta || 0);
+  const oldPriceOf = (item) => {
+    const cur = currentPrice(item);
+    const raw = item.old_price ?? item.precio_anterior;
+    if (raw) {
+      const val = parseFloat(raw);
+      if (Number.isFinite(val) && val > 0 && val > cur) return val;
+    }
+    const rate = parseFloat(item.tasa_descuento || 0);
+    if (rate > 0 && rate < 100 && cur > 0) return cur / (1 - rate / 100);
+    return null;
+  };
+  const discountOf = (item) => {
+    const old = oldPriceOf(item);
+    const cur = currentPrice(item);
+    if (old && old > cur && cur > 0) return Math.round(((old - cur) / old) * 100);
+    const rate = parseFloat(item.tasa_descuento || 0);
+    return rate > 0 && rate < 100 ? Math.round(rate) : null;
+  };
+  const productImg = (item) => {
+    if (!item.imagen_url) return 'https://via.placeholder.com/300?text=Sin+Imagen';
+    return /^https?:\/\//.test(item.imagen_url) ? item.imagen_url : `/storage/${item.imagen_url}`;
+  };
+
+  const sectionIsOpen = (key) => openSections[key] !== false;
+
+  const sectionHeader = (key, label) => (
+    <button onClick={() => toggleSection(key)} className="w-full flex items-center justify-between py-1 text-left cursor-pointer">
+      <span className="text-xs font-black text-slate-500 uppercase tracking-wider">{label}</span>
+      <span className={`material-symbols-outlined text-base text-slate-400 transition-transform duration-200 ${sectionIsOpen(key) ? 'rotate-180' : ''}`}>expand_more</span>
+    </button>
+  );
+
+  const renderSection = (sec) => {
+    if (sec.type === 'cats') {
+      const key = 'categorias';
+      return (
+        <div key={key} className="py-2 border-b border-slate-100">
+          {sectionHeader(key, sec.label)}
+          {sectionIsOpen(key) && (
+            <div className="mt-1 space-y-0.5 text-sm font-medium">
+              <button
+                onClick={() => toggleCategory('')}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${!activeCategory ? 'bg-[#fea619]/15 font-bold text-black' : 'text-slate-600 hover:text-black hover:bg-slate-50'}`}
+              >
+                <span>Todas</span>
+              </button>
+              {categorias?.map((cat) => (
+                <div key={cat.id} className="space-y-0.5">
+                  <button
+                    onClick={() => (cat.children?.length ? toggleExpandCat(cat.id) : toggleCategory(cat.id))}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${activeCategory === String(cat.id) ? 'bg-[#fea619]/15 font-bold text-black' : 'text-slate-600 hover:text-black hover:bg-slate-50'}`}
+                  >
+                    <span className="truncate">{cat.nombre}</span>
+                    {cat.children?.length > 0 && (
+                      <span className={`material-symbols-outlined text-sm text-slate-400 transition-transform duration-200 shrink-0 ${expandedCat === cat.id ? 'rotate-180' : ''}`}>expand_more</span>
+                    )}
+                  </button>
+                  {expandedCat === cat.id && cat.children?.length > 0 && (
+                    <div className="ml-4 pl-3 border-l-2 border-[#fea619]/30 space-y-0.5">
+                      {cat.children.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => toggleCategory(sub.id)}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer truncate ${activeCategory === String(sub.id) ? 'bg-[#fea619]/15 font-bold text-black' : 'text-slate-500 hover:text-black hover:bg-slate-50'}`}
+                        >
+                          {sub.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (sec.type === 'attrs') {
+      const key = `attrs_${sec.key}`;
+      return (
+        <div key={key} className="py-2 border-b border-slate-100">
+          {sectionHeader(key, sec.label)}
+          {sectionIsOpen(key) && (
+            <div className="mt-1 space-y-1.5 text-sm font-medium">
+              {sec.options.map((opt) => (
+                <label key={opt} className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={activeAttrs[sec.key] === opt}
+                    onChange={() => toggleAttr(sec.key, opt)}
+                    className="rounded border-slate-300 accent-[#fea619] focus:ring-[#fea619]/50"
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (sec.type === 'brand') {
+      const key = 'marca';
+      return (
+        <div key={key} className="py-2 border-b border-slate-100">
+          {sectionHeader(key, sec.label)}
+          {sectionIsOpen(key) && (
+            <div className="mt-1 space-y-1.5 text-sm font-medium max-h-64 overflow-y-auto no-scrollbar pr-1">
+              {marcas?.length > 0 ? (
+                marcas.map((m) => (
+                  <label key={m.id} className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={activeBrand === String(m.id)}
+                      onChange={() => toggleBrand(m.id)}
+                      className="rounded border-slate-300 accent-[#fea619] focus:ring-[#fea619]/50"
+                    />
+                    <span className="truncate">{m.nombre}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-xs text-slate-400">No hay marcas registradas.</p>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (sec.type === 'price') {
+      const key = 'precio';
+      return (
+        <div key={key} className="py-2">
+          {sectionHeader(key, sec.label)}
+          {sectionIsOpen(key) && (
+            <div className="mt-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 w-full focus-within:border-[#fea619] transition-colors">
+                  <span className="text-[10px] font-black text-slate-400">S/</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={draftMin}
+                    onChange={handleMinInput}
+                    placeholder="Min"
+                    className="bg-transparent w-full text-xs font-bold outline-none placeholder-slate-300"
+                  />
+                </div>
+                <span className="text-slate-400 text-xs">–</span>
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 w-full focus-within:border-[#fea619] transition-colors">
+                  <span className="text-[10px] font-black text-slate-400">S/</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={draftMax}
+                    onChange={handleMaxInput}
+                    placeholder="Max"
+                    className="bg-transparent w-full text-xs font-bold outline-none placeholder-slate-300"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="2000"
+                step="50"
+                value={sliderMax}
+                onChange={handlePriceSlider}
+                className="w-full accent-[#fea619] mt-4 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] font-bold text-slate-500 mt-1">
+                <span>S/ 0</span>
+                <span className="text-[#855300] font-extrabold">S/ {Number(sliderMax).toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -74,213 +416,290 @@ export default function StoreCatalog() {
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </Head>
 
-      {/* Header */}
-      <header className="w-full sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-300">
-        <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16 gap-4">
-          <div className="flex items-center gap-8">
-            <Link href={route('store.index')} className="font-black text-xl text-black uppercase tracking-tight flex items-center gap-2 group shrink-0">
-              <span className="bg-[#fea619] text-black px-2 py-0.5 rounded text-sm group-hover:scale-105 transition-transform">CMA</span> 
-              <span className="group-hover:text-[#855300] transition-colors">STORE</span>
-            </Link>
-            
-            <nav className="hidden md:flex items-center gap-6 text-sm font-semibold">
-              <Link href={route('store.index')} className="text-slate-600 hover:text-black hover:scale-105 transition-all">Inicio</Link>
-              
-              {/* Menú Desplegable "Productos" */}
-              <div 
-                className="relative py-2"
-                onMouseEnter={() => setIsProductsDropdownOpen(true)}
-                onMouseLeave={() => setIsProductsDropdownOpen(false)}
-              >
-                <Link 
-                  href={route('store.catalog')} 
-                  className="text-black font-bold border-b-2 border-[#fea619] pb-1 flex items-center gap-1 transition-all"
-                >
-                  <span>Productos</span>
-                  <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${isProductsDropdownOpen ? 'rotate-180 text-[#855300]' : ''}`}>
-                    expand_more
-                  </span>
-                </Link>
-
-                {/* Submenú Dropdown */}
-                {isProductsDropdownOpen && (
-                  <div className="absolute top-full left-0 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5">Categorías</div>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">tv_gen</span>
-                      <span>Soportes & Racks TV</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">construction</span>
-                      <span>Ferretería Industrial</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">handyman</span>
-                      <span>Herramientas de Mano</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">electrical_services</span>
-                      <span>Electricidad</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">plumbing</span>
-                      <span>Fontanería & Tubos</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <Link href={route('store.detail')} className="text-slate-600 hover:text-black hover:scale-105 transition-all">Producto Destacado</Link>
-            </nav>
-          </div>
-
-          {/* Buscador en el Navbar */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xs sm:max-w-md mx-2">
-            <div className="flex items-center bg-[#f2f4f6] px-3.5 py-1.5 rounded-xl border border-slate-300 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all shadow-sm">
-              <span className="material-symbols-outlined text-slate-400 text-[20px]">search</span>
-              <input 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none focus:outline-none focus:ring-0 text-xs sm:text-sm w-full pl-2 text-slate-800 placeholder-slate-400" 
-                placeholder="Buscar racks, herramientas, cables..." 
-                type="text" 
-              />
-            </div>
-          </form>
-
-          <div className="flex items-center gap-4 shrink-0">
-            <Link href={route('dashboard')} className="flex items-center gap-1.5 px-3 py-1.5 bg-black text-white rounded-lg text-xs font-bold hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-sm">
-              <span className="material-symbols-outlined text-sm">dashboard</span>
-              <span className="hidden sm:inline">Panel POS</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <StoreHeader key={activeSearch} categorias={categorias} initialSearch={activeSearch} />
 
       <main className="flex-grow max-w-[1280px] mx-auto px-6 py-8 w-full">
         {/* Banner Promocional */}
-        <section className="mb-10 relative overflow-hidden rounded-2xl bg-[#1c1b1b] p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between text-white shadow-xl hover:shadow-2xl transition-all">
-          <div className="z-10 text-center md:text-left">
-            <span className="inline-block bg-[#fea619] text-black px-3 py-1 rounded text-xs font-black uppercase mb-3 animate-pulse">Oferta por tiempo limitado</span>
-            <h1 className="text-2xl sm:text-4xl font-extrabold mb-3">¡Instalación Profesional Incluida en Racks Seleccionados!</h1>
-            <p className="text-slate-300 text-sm max-w-xl">Recibe montaje técnico especializado de nuestro equipo certificado ProLink al comprar cualquier soporte resistente.</p>
-          </div>
-        </section>
+        <section className="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#e0532e] via-[#c8451e] to-[#932a10] shadow-xl">
+          <div className="absolute -top-12 -right-12 w-64 h-64 bg-white/10 rounded-full blur-[90px] pointer-events-none"></div>
+          <div className="absolute -bottom-12 left-1/4 w-48 h-48 bg-black/20 rounded-full blur-[80px] pointer-events-none"></div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar Filtros */}
-          <aside className="w-full md:w-64 shrink-0">
-            <div className="sticky top-24 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-              <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Tamaño de Pantalla</h3>
-                <div className="space-y-2 text-sm font-medium">
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" />
-                    <span>32-55" Display</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" defaultChecked />
-                    <span>55-85" Display</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" />
-                    <span>85"+ Ultra Large</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Tipo de Soporte</h3>
-                <div className="space-y-2 text-sm font-medium">
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" />
-                    <span>Fijo (Fixed)</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" defaultChecked />
-                    <span>Inclinable (Tilt)</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 cursor-pointer hover:text-black transition-colors">
-                    <input type="checkbox" className="rounded border-slate-300 text-black focus:ring-black" defaultChecked />
-                    <span>Movimiento Completo</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Precio Máximo</h3>
-                <input
-                  type="range"
-                  min="50"
-                  max="1000"
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(e.target.value)}
-                  className="w-full accent-black cursor-pointer"
-                />
-                <div className="flex justify-between text-xs font-bold text-slate-500 mt-1">
-                  <span>$50</span>
-                  <span className="text-black font-extrabold">${priceRange}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setPriceRange(500)}
-                className="w-full py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 hover:scale-105 active:scale-95 transition-all"
-              >
-                Limpiar Filtros
-              </button>
-            </div>
-          </aside>
-
-          {/* Grid Productos */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-xs font-bold text-slate-500">Mostrando 6 Soluciones de Racks</span>
-              <select className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none hover:border-slate-400 transition-colors">
-                <option>Destacados</option>
-                <option>Precio: Menor a Mayor</option>
-                <option>Precio: Mayor a Menor</option>
-              </select>
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4 px-6 sm:px-10 lg:px-12 py-6 lg:h-[150px] w-full">
+            {/* Bloque Izquierdo: Textos Promocionales */}
+            <div className="text-center lg:text-left max-w-md shrink-0">
+              <h1 className="text-white font-black text-lg sm:text-xl lg:text-2xl leading-tight">
+                Innovación y Calidad en Racks y Ferretería
+              </h1>
+              <p className="mt-1.5 text-white/90 text-xs sm:text-sm font-semibold">
+                Lo último en soportes de TV y herramientas{' '}
+                <span className="inline-block bg-black text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full align-middle shadow">
+                  está aquí
+                </span>
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((item) => (
-                <div key={item.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300">
-                  <div className="relative aspect-square p-6 bg-slate-50 overflow-hidden flex items-center justify-center">
-                    <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={item.img} alt={item.name} />
-                    <span className="absolute top-3 right-[#fea619]/20 top-3 right-3 bg-black text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase">{item.tag}</span>
-                  </div>
+            {/* Bloque Centro: Muestra de Productos */}
+            <div className="hidden md:flex items-center justify-center gap-3 shrink-0">
+              {productList.slice(0, 4).map((item) => {
+                const thumbUrl = item.imagen_url
+                  ? (/^https?:\/\//.test(item.imagen_url) ? item.imagen_url : `/storage/${item.imagen_url}`)
+                  : 'https://via.placeholder.com/100?text=CMA';
+                return (
+                  <img
+                    key={item.id}
+                    src={thumbUrl}
+                    alt={item.nombre}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/95 object-contain p-1.5 shadow-md ring-1 ring-white/40 hover:scale-110 hover:rotate-2 transition-transform"
+                  />
+                );
+              })}
+            </div>
 
-                  <div className="p-5 flex flex-col flex-grow">
-                    {item.service && (
-                      <span className="inline-block bg-[#fea619]/20 text-[#855300] text-[10px] font-extrabold px-2 py-0.5 rounded w-max mb-2">
-                        Instalación Incluida
-                      </span>
-                    )}
-                    <h4 className="font-extrabold text-lg text-black mb-1 group-hover:text-[#855300] transition-colors">{item.name}</h4>
-                    <p className="text-xs text-slate-500 mb-4">{item.desc}</p>
-
-                    <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3">
-                      <span className="text-xl font-black text-black">{item.price}</span>
-                      <Link
-                        href={route('store.detail')}
-                        className="px-4 py-2 bg-black text-white font-bold text-xs rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
-                      >
-                        <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Detalle</span>
-                      </Link>
-                    </div>
-                  </div>
+            {/* Bloque Derecho: Insignias de Servicio */}
+            <div className="flex items-center justify-center gap-5 lg:gap-6 shrink-0">
+              {[
+                { icon: 'local_shipping', label: 'Envíos a todo el país' },
+                { icon: 'verified_user', label: 'Compra segura garantizada' },
+                { icon: 'storefront', label: 'Retira o solicita tu instalación' },
+              ].map((b) => (
+                <div key={b.label} className="flex flex-col items-center gap-1.5 text-center">
+                  <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black text-white flex items-center justify-center shadow-lg ring-2 ring-white/30">
+                    <span className="material-symbols-outlined text-lg sm:text-xl">{b.icon}</span>
+                  </span>
+                  <span className="text-white text-[10px] font-bold leading-tight max-w-[95px]">{b.label}</span>
                 </div>
               ))}
             </div>
           </div>
+        </section>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filtros */}
+          <aside className="w-full lg:w-72 shrink-0">
+            <div className="sticky top-24 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+              {/* Título de la Categoría Activa */}
+              {activeCategoryName && (
+                <div className="pb-3 border-b border-slate-100 mb-1">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm text-[#855300]">category</span>
+                    {theme ? 'Categoría' : 'Sub-Categoría'}
+                  </span>
+                  <h2 className="text-lg font-black text-black leading-tight mt-1">{activeCategoryName}</h2>
+                </div>
+              )}
+
+              <div className="pb-3 border-b border-slate-100 mb-1 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base text-[#855300]">tune</span>
+                  Filtros
+                </h3>
+                {hasActiveFilters && (
+                  <button onClick={cleanFilters} className="text-[11px] font-bold text-red-500 hover:underline flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">filter_alt_off</span>
+                    Limpiar
+                  </button>
+                )}
+              </div>
+
+              {/* Chips de Filtros Activos */}
+              {chips.length > 0 && (
+                <div className="py-3 border-b border-slate-100">
+                  <div className="flex flex-wrap gap-1.5">
+                    {chips.map((chip) => (
+                      <button
+                        key={chip.key}
+                        onClick={() => removeFilter(chip.key)}
+                        className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        {chip.label}
+                        <span className="material-symbols-outlined text-xs">close</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Secciones de Filtros Dinámicas por Categoría */}
+              {sections.map((sec) => renderSection(sec))}
+            </div>
+          </aside>
+
+          {/* Contenido Derecho */}
+          <div className="flex-1 min-w-0">
+            {/* Barra Superior de Ordenamiento y Estado */}
+            <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-sm flex items-center justify-between gap-3 flex-wrap mb-6">
+              <span className="text-sm font-bold text-slate-700">
+                {productList.length} de <span className="text-black font-extrabold">{productos?.total ?? productList.length}</span> resultados
+              </span>
+              <div className="flex items-center gap-3 shrink-0">
+                <select
+                  value={activeSort}
+                  onChange={handleSort}
+                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none hover:border-slate-400 transition-colors cursor-pointer"
+                >
+                  <option value="">Destacados / Relevancia</option>
+                  <option value="price_asc">Precio: menor a mayor</option>
+                  <option value="price_desc">Precio: mayor a menor</option>
+                </select>
+                <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}
+                  >
+                    <span className="material-symbols-outlined text-lg">grid_view</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${viewMode === 'list' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}
+                  >
+                    <span className="material-symbols-outlined text-lg">view_list</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Grilla / Lista de Productos */}
+            {productList.length > 0 ? (
+              viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {productList.map((item) => {
+                    const old = oldPriceOf(item);
+                    const disc = discountOf(item);
+                    return (
+                      <div key={item.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                        <div className="relative aspect-square bg-white p-5 flex items-center justify-center overflow-hidden border-b border-slate-100">
+                          <img className="max-h-full w-auto object-contain group-hover:scale-110 transition-transform duration-500" src={productImg(item)} alt={item.nombre} />
+                          {disc !== null && (
+                            <span className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-md">
+                              -{disc}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4 flex flex-col flex-grow">
+                          {item.marca?.nombre && (
+                            <span className="text-[10px] font-black tracking-widest uppercase text-[#855300] mb-1">{item.marca.nombre}</span>
+                          )}
+                          <Link
+                            href={route('store.detail', item.id)}
+                            className="font-bold text-sm text-black leading-snug line-clamp-2 mb-3 group-hover:text-[#855300] transition-colors"
+                          >
+                            {item.nombre}
+                          </Link>
+                          <div className="mt-auto">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              {old !== null && (
+                                <span className="text-xs font-semibold text-slate-400 line-through">S/ {old.toFixed(2)}</span>
+                              )}
+                              <span className="text-lg font-black text-black">S/ {currentPrice(item).toFixed(2)}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-xs">local_shipping</span>
+                              Envío a todo el país · Retiro en tienda
+                            </p>
+                            <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                              <span className="text-[10px] font-bold text-emerald-600">Stock: {formatStock(item.stock, item.unidad_medida)}</span>
+                              <Link
+                                href={route('store.detail', item.id)}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-black text-white text-[10px] font-bold rounded-lg hover:bg-[#fea619] hover:text-black transition-all cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                Ver
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {productList.map((item) => {
+                    const old = oldPriceOf(item);
+                    const disc = discountOf(item);
+                    return (
+                      <div key={item.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col sm:flex-row shadow-sm hover:shadow-xl transition-all duration-300">
+                        <div className="sm:w-44 shrink-0 bg-white p-4 flex items-center justify-center min-h-[160px] border-b sm:border-b-0 sm:border-r border-slate-100">
+                          <img className="max-h-full w-auto object-contain group-hover:scale-110 transition-transform duration-500" src={productImg(item)} alt={item.nombre} />
+                        </div>
+                        <div className="p-5 flex flex-1 flex-col justify-center gap-1">
+                          <div className="flex items-center gap-2">
+                            {item.marca?.nombre && (
+                              <span className="text-[10px] font-black tracking-widest uppercase text-[#855300]">{item.marca.nombre}</span>
+                            )}
+                            {disc !== null && (
+                              <span className="bg-green-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-{disc}%</span>
+                            )}
+                          </div>
+                          <Link href={route('store.detail', item.id)} className="font-bold text-base text-black leading-snug group-hover:text-[#855300] transition-colors">
+                            {item.nombre}
+                          </Link>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            {old !== null && (
+                              <span className="text-xs font-semibold text-slate-400 line-through">S/ {old.toFixed(2)}</span>
+                            )}
+                            <span className="text-xl font-black text-black">S/ {currentPrice(item).toFixed(2)}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1">
+                            <span className="material-symbols-outlined text-xs">local_shipping</span>
+                            Envío a todo el país · Retiro en tienda
+                          </p>
+                          <div className="flex items-center gap-3 mt-3">
+                            <span className="text-[10px] font-bold text-emerald-600">Stock: {formatStock(item.stock, item.unidad_medida)}</span>
+                            <Link
+                              href={route('store.detail', item.id)}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-black text-white text-xs font-bold rounded-xl hover:bg-[#fea619] hover:text-black transition-all cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                              Ver Producto
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : (
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                <span className="material-symbols-outlined text-5xl text-slate-300 block mb-3">search_off</span>
+                <p className="text-slate-500 font-bold">
+                  {hasActiveFilters
+                    ? 'No se encontraron productos con los filtros seleccionados.'
+                    : 'No se encontraron productos registrados en el POS.'}
+                </p>
+                {hasActiveFilters && (
+                  <button onClick={cleanFilters} className="mt-4 text-xs font-bold text-white bg-black px-5 py-2.5 rounded-xl hover:bg-[#fea619] hover:text-black transition-all">
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
+
+            {productos && productos.last_page > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => goToPage(Number(productos.current_page) - 1)}
+                  disabled={!productos.prev_page_url}
+                  className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <span className="text-xs font-bold text-slate-600">Página {productos.current_page} de {productos.last_page}</span>
+                <button
+                  onClick={() => goToPage(Number(productos.current_page) + 1)}
+                  disabled={!productos.next_page_url}
+                  className="px-4 py-2.5 bg-black text-white border border-black rounded-xl text-xs font-bold hover:bg-[#fea619] hover:text-black hover:border-[#fea619] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
-      <footer className="bg-black text-white py-8 border-t border-slate-800 mt-12 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} CMA Hardware Store. Todos los derechos reservados.
-      </footer>
+      <StoreFooter />
     </div>
   );
 }

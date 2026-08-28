@@ -1,14 +1,71 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { FaWhatsapp, FaPhone } from 'react-icons/fa';
+import StoreHeader from '@/Components/StoreHeader';
+import StoreFooter from '@/Components/StoreFooter';
+import banner1 from '@/Assets/Banner/banner1.webp';
+import pretulLogo from '@/Assets/Marcas/pretul-logo.webp';
+import soportexLogo from '@/Assets/Marcas/soportex_innova_logo.webp';
+import stanleyLogo from '@/Assets/Marcas/stanley-logo.webp';
+import strutekLogo from '@/Assets/Marcas/Strutek-logo.webp';
+import truperLogo from '@/Assets/Marcas/Truper-logo.webp';
 
-export default function StoreIndex() {
+export default function StoreIndex({ categorias, productos }) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isProductsDropdownOpen, setIsProductsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showHelpWidget, setShowHelpWidget] = useState(true);
+  const rackCarouselRef = useRef(null);
+  const categoriesCarouselRef = useRef(null);
+  const featuredCarouselRef = useRef(null);
+  const ferreteriaCarouselRef = useRef(null);
+
+  const scrollSlider = (ref, dir) => {
+    const el = ref.current;
+    if (!el) return;
+    const step = Math.round(el.clientWidth * 0.85);
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  };
+
+  const productList = productos || [];
+
+  const mainCategories = categorias || [];
+
+  const categoryIcons = [
+    'handyman',
+    'power',
+    'plumbing',
+    'electrical_services',
+    'construction',
+    'hardware',
+    'build',
+    'engineering',
+    'grid_view',
+    'settings_brick_home',
+  ];
+
+  const rackProducts = [
+    { id: 1, brand: 'GLIXCO', sku: 'DTD315L', name: 'Soporte de TV fijo para pared 32"-65"', price: 120.0, oldPrice: 130.0, rating: 4.5, reviews: 24 },
+    { id: 2, brand: 'GLIXCO', sku: 'DTD320L', name: 'Soporte de TV basculante inclinable 32"-70"', price: 150.0, oldPrice: null, rating: 4.0, reviews: 18 },
+    { id: 3, brand: 'GLIXCO', sku: 'DTD325L', name: 'Soporte de TV con movimiento completo 37"-75"', price: 180.0, oldPrice: 200.0, rating: 5.0, reviews: 31 },
+    { id: 4, brand: 'GLIXCO', sku: 'DTDM500', name: 'Soporte de TV con cajón para consolas 50"-80"', price: 220.0, oldPrice: 250.0, rating: 4.5, reviews: 12 },
+    { id: 5, brand: 'GLIXCO', sku: 'DTD310L', name: 'Soporte de TV bajo para home theater 32"-55"', price: 95.0, oldPrice: null, rating: 4.0, reviews: 8 },
+    { id: 6, brand: 'GLIXCO', sku: 'DTD330L', name: 'Soporte de TV articulado de doble brazo 42"-75"', price: 210.0, oldPrice: 230.0, rating: 4.5, reviews: 27 },
+    { id: 7, brand: 'GLIXCO', sku: 'DTD340L', name: 'Soporte de TV de cielo raso / proyector hasta 90"', price: 320.0, oldPrice: null, rating: 4.0, reviews: 5 },
+  ];
+
+  const ferreteriaProducts = [
+    { id: 1, brand: 'TRUPER', sku: 'TP-1001', name: 'Taladro percutor 1/2" 600 W', price: 149.0, oldPrice: 179.0 },
+    { id: 2, brand: 'PRETUL', sku: 'PT-2002', name: 'Martillo de uña 16 oz con mango fibra', price: 28.0, oldPrice: null },
+    { id: 3, brand: 'STANLEY', sku: 'ST-3003', name: 'Cinta métrica 5 m x 19 mm', price: 19.5, oldPrice: 24.0 },
+    { id: 4, brand: 'TRUPER', sku: 'TP-4004', name: 'Juego de desarmadores 8 piezas', price: 46.0, oldPrice: null },
+    { id: 5, brand: 'SOPORTEX', sku: 'SP-5005', name: 'Disco de corte metálico 4.5" premium', price: 12.5, oldPrice: 15.0 },
+    { id: 6, brand: 'PRETUL', sku: 'PT-6006', name: 'Flexómetro metálico 3 m', price: 8.9, oldPrice: null },
+    { id: 7, brand: 'STANLEY', sku: 'ST-7007', name: 'Nivel de burbuja 24" de aluminio', price: 32.0, oldPrice: 38.0 },
+    { id: 8, brand: 'TRUPER', sku: 'TP-8008', name: 'Guantes de carnaza reforzados', price: 15.0, oldPrice: null },
+  ];
 
   const slides = [
     {
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAo69GGCDxVufer3peu6jB1zQGfX3cZfHXc9HP_w6G4xdrOXK54W1YiLdV3gOeSWcYnY7KpT_cGwk6aapnd8pk-XyCpF2tQuKZw7OfkPloxTcbDeYb1N5I9acRJ03ihUAXP83_Iisr9LtoJhgxhC12OTvCCp7enDpamYzaHcDcDBkVnX0GRhPtlp7iWx_kwsUqb119jjcL4jIS2Y3XQmrAQcJB7IzOHFNV5bbbrTKCrUSckjHEUjfbIdHmyb5sr-cLw5oPttpB2-cI',
+      image: banner1,
       tag: 'Servicios de Instalación Elite',
       title: 'Hardware de Precisión y Montaje Profesional de TV',
       desc: 'Desde herramientas estructurales de uso rudo hasta sistemas de racks profesionales, proporcionamos los componentes industriales y la instalación experta que su proyecto exige.',
@@ -28,8 +85,11 @@ export default function StoreIndex() {
   ];
 
   const brands = [
-    'STRUCTO_CORP', 'IRON_WORKS', 'PRECISION_IND', 'HARDWARE_LABS', 'MOUNT_PRO', 'TECH_BUILD',
-    'CMA_TOOLS', 'PROSERIES_HARDWARE', 'STANLEY_PRO', 'BOSCH_HEAVY'
+    { id: 'pretul', name: 'Pretul', logo: pretulLogo },
+    { id: 'soportex-innova', name: 'Soportex Innova', logo: soportexLogo },
+    { id: 'stanley', name: 'Stanley', logo: stanleyLogo },
+    { id: 'strutek', name: 'Strutek', logo: strutekLogo },
+    { id: 'truper', name: 'Truper', logo: truperLogo },
   ];
 
   useEffect(() => {
@@ -38,13 +98,6 @@ export default function StoreIndex() {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = route('store.catalog');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] text-[#191c1e] font-sans selection:bg-[#fea619]/30">
@@ -67,101 +120,7 @@ export default function StoreIndex() {
         `}</style>
       </Head>
 
-      {/* Navbar Superior */}
-      <header className="w-full sticky top-0 z-50 bg-[#f7f9fb]/95 backdrop-blur-md border-b border-[#c4c7c7] shadow-sm transition-all duration-300">
-        <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between h-16 gap-4">
-          <div className="flex items-center gap-8">
-            <Link href={route('store.index')} className="font-black text-xl text-black uppercase tracking-tight flex items-center gap-2 group shrink-0">
-              <span className="bg-[#fea619] text-black px-2 py-0.5 rounded text-sm group-hover:scale-105 transition-transform">CMA</span> 
-              <span className="group-hover:text-[#855300] transition-colors">STORE</span>
-            </Link>
-            
-            <nav className="hidden md:flex items-center gap-6 font-semibold text-sm">
-              <Link 
-                href={route('store.index')} 
-                className="text-black font-bold border-b-2 border-[#fea619] pb-1 transition-all"
-              >
-                Inicio
-              </Link>
-
-              {/* Menú Desplegable "Productos" */}
-              <div 
-                className="relative py-2"
-                onMouseEnter={() => setIsProductsDropdownOpen(true)}
-                onMouseLeave={() => setIsProductsDropdownOpen(false)}
-              >
-                <Link 
-                  href={route('store.catalog')} 
-                  className="text-slate-700 hover:text-black flex items-center gap-1 hover:scale-105 transition-all"
-                >
-                  <span>Productos</span>
-                  <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${isProductsDropdownOpen ? 'rotate-180 text-[#855300]' : ''}`}>
-                    expand_more
-                  </span>
-                </Link>
-
-                {/* Submenú Dropdown */}
-                {isProductsDropdownOpen && (
-                  <div className="absolute top-full left-0 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5">Categorías</div>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">tv_gen</span>
-                      <span>Soportes & Racks TV</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">construction</span>
-                      <span>Ferretería Industrial</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">handyman</span>
-                      <span>Herramientas de Mano</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">electrical_services</span>
-                      <span>Electricidad</span>
-                    </Link>
-                    <Link href={route('store.catalog')} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#fea619]/15 hover:text-black transition-all">
-                      <span className="material-symbols-outlined text-base text-[#855300]">plumbing</span>
-                      <span>Fontanería & Tubos</span>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <Link 
-                href={route('store.detail')} 
-                className="text-slate-600 hover:text-black hover:scale-105 transition-all"
-              >
-                Producto Destacado
-              </Link>
-            </nav>
-          </div>
-
-          {/* Buscador en el Navbar */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xs sm:max-w-md mx-2">
-            <div className="flex items-center bg-white px-3.5 py-1.5 rounded-xl border border-slate-300 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 transition-all shadow-sm">
-              <span className="material-symbols-outlined text-slate-400 text-[20px]">search</span>
-              <input 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none focus:outline-none focus:ring-0 text-xs sm:text-sm w-full pl-2 text-slate-800 placeholder-slate-400" 
-                placeholder="Buscar racks, herramientas, cables..." 
-                type="text" 
-              />
-            </div>
-          </form>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <Link 
-              href={route('dashboard')} 
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-sm"
-            >
-              <span className="material-symbols-outlined text-sm">dashboard</span>
-              <span className="hidden sm:inline">Panel POS</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <StoreHeader categorias={categorias} />
 
       <main>
         {/* Carrusel Hero */}
@@ -189,18 +148,20 @@ export default function StoreIndex() {
                 {slides[currentSlide].desc}
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link 
-                  href={route('store.catalog')} 
+                <Link
+                  href={route('store.catalog')}
                   className="h-13 px-8 bg-[#fea619] text-black font-extrabold text-sm rounded-xl flex items-center gap-2 hover:scale-105 hover:bg-[#ffb95f] active:scale-95 transition-all shadow-xl shadow-[#fea619]/20"
                 >
                   Explorar Catálogo <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
                 </Link>
-                <Link 
-                  href={route('store.detail')} 
-                  className="h-13 px-8 bg-white/10 backdrop-blur-xl border border-white/30 text-white font-extrabold text-sm rounded-xl hover:bg-white/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                >
-                  Ver Producto Destacado
-                </Link>
+                {productList.length > 0 && (
+                  <Link
+                    href={route('store.detail', productList[0].id)}
+                    className="h-13 px-8 bg-white/10 backdrop-blur-xl border border-white/30 text-white font-extrabold text-sm rounded-xl hover:bg-white/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    Ver Producto Destacado
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -219,14 +180,18 @@ export default function StoreIndex() {
 
         {/* SLIDER INFINITE LOOP de Marcas y Logos */}
         <section className="py-7 border-y border-slate-200 bg-white overflow-hidden shadow-inner">
-          <div className="animate-infinite-scroll flex items-center gap-12 font-black text-slate-600 tracking-tighter uppercase italic text-lg select-none">
+          <div className="animate-infinite-scroll flex items-center gap-16 select-none">
             {[...brands, ...brands].map((brand, i) => (
-              <span 
-                key={i} 
-                className="hover:text-[#855300] hover:scale-110 transition-all cursor-pointer px-4 flex items-center gap-2"
+              <span
+                key={i}
+                className="hover:scale-110 transition-all duration-300 cursor-pointer px-4 flex items-center"
               >
-                <span className="w-2 h-2 rounded-full bg-[#fea619]" />
-                {brand}
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  title={brand.name}
+                  className="h-10 sm:h-12 w-auto object-contain grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300"
+                />
               </span>
             ))}
           </div>
@@ -244,157 +209,570 @@ export default function StoreIndex() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { title: 'Racks y Montaje', desc: 'Soluciones para pantallas de gran formato.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdnvgDl5Nme-Nh7xS8qQYbbXDkkwBfRKBgeNm8Rx0nlkn3RzV6J34YGWvSpgG2GCZGp9pRdRQUFhXjwbwUHMzMlEGrQgKnM6hgo0WRK0mE1o7d8ej2q6GOjbsipWvxmzfp3mf8Rq7oH0Pgddek4W_aBTFnfSpoxWHzgwC1TXaBvbF42HD877WIiuRsVa4cfwsUqzm7jCFllrbBQZOVLBG8Yc37Ecte4x5Qyesnf719hABW8-EsR5Zx7QHFyVCYv5UCh4eV3OUfJZ0' },
-              { title: 'Herramientas', desc: 'Equipamiento eléctrico y manual.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDgEAMQoSvf7kM2gmjoSyFpUSuC_0b0C2KmGC9_9riq4gBbXlFKApkSw0KXeTytWgKoTnoRCAln1cA77vqTHljvRxAnnu2Df62oLYCqfBBEqApdI-IeVAjHVled9857LOiCunwWkPXaPIOdDP9GNhsbcmPgmfp8aelF3vli4D2Jn5Y2ZM9BioSSe0YMvh8U9qPBttAm8cR5StWmMC_KMRudsot3GaTWOVr3fAM_9ZnFI9Sl1-qPfiBrvn5JOae6kFRMMGoOe1khZzM' },
-              { title: 'Electricidad', desc: 'Cableado, cajas y componentes.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCD-pfHKzTiL1tDakaBTagwr1NYxITB1nz9CzjvqvihjeJeyOtYP2oit7-BDlDUxnT25D0U8LauIvAij29c_IELwKWefpN6NQtVPIkw1jmviomkwFy8YQMPMdXl6jOazJmgeBGXBSo7cCaHCWNYO2Iuzfq-R8B46VLZDR6hel9cO2CergmN17vTsBFe9k0wrk9H8sufm28Zl7eBPDydz7Qt-rYpO2ytXUbrfdDZZQcJTPWQ_KIvOFXVVB6siBdUKxE9jl6_NloaI1Y' },
-              { title: 'Fontanería', desc: 'Fijaciones industriales y tuberías.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDhC1xPxfGurvB829SiEw-gC-7Is7dEEX-SKbKWsRLuVR18IYEp-9k7i4lle4FdzVKznECYfoiy3XG9oBkWaPQnv1uj4K_pvavlibH3egzXTvT-7_uztrVzKBRGZgxThKUE1y8Isg3KzPKKG4bKOVv5C2qf2Cp1_UmJRS4eKL_ESTFLPMysFC4fHSwPsuwoERo8z6-YrpjmxYUE5AYlRkX-PgmjYPT5Rq7KC_v2GW0giEAa8Hle6hm19aaigKDmCW7cJIccScKE-pQ' },
-            ].map((cat, idx) => (
-              <Link 
-                key={idx} 
-                href={route('store.catalog')} 
-                className="group relative h-80 overflow-hidden rounded-2xl border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500"
-              >
-                <div className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700 ease-out" style={{ backgroundImage: `url('${cat.img}')` }}></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 flex flex-col justify-end">
-                  <h3 className="text-xl font-bold text-white mb-1 group-hover:text-[#fea619] transition-colors">{cat.title}</h3>
-                  <p className="text-slate-300 text-xs mb-3">{cat.desc}</p>
-                  <span className="text-[#fea619] font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all">
-                    Explorar <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
-                  </span>
+          <div className="relative">
+            {/* Flecha izquierda */}
+            <button
+              onClick={() => scrollSlider(categoriesCarouselRef, -1)}
+              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_left</span>
+            </button>
+
+            <div
+              ref={categoriesCarouselRef}
+              className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
+            >
+              {mainCategories.length > 0 ? (
+                mainCategories.map((cat, idx) => (
+                  <Link
+                    key={cat.id}
+                    href={route('store.catalog', { category: cat.id })}
+                    className="group relative h-56 w-[280px] sm:w-[300px] shrink-0 snap-start rounded-2xl overflow-hidden border border-slate-200 bg-[#0f172a] shadow-sm hover:shadow-2xl hover:-translate-y-1.5 hover:border-[#fea619]/60 transition-all duration-500 flex flex-col justify-between p-6"
+                  >
+                    <div className="absolute -right-6 -top-6 w-28 h-28 bg-[#fea619]/10 rounded-full group-hover:scale-150 group-hover:bg-[#fea619]/25 transition-all duration-700"></div>
+
+                    <div className="flex items-start justify-between relative">
+                      <span className="material-symbols-outlined text-4xl text-[#fea619] group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                        {categoryIcons[idx % categoryIcons.length]}
+                      </span>
+                      {cat.children && cat.children.length > 0 && (
+                        <span className="bg-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full border border-white/10">
+                          {cat.children.length} sub
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <h3 className="text-lg font-black text-white uppercase tracking-wide group-hover:text-[#fea619] transition-colors">
+                        {cat.nombre}
+                      </h3>
+                      <span className="text-[#fea619] font-bold text-xs flex items-center gap-1 group-hover:gap-2 transition-all mt-1">
+                        Explorar <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+                      </span>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="w-full text-center py-10 bg-white rounded-2xl border border-slate-200">
+                  <p className="text-slate-500 font-bold">No hay categorías registradas.</p>
                 </div>
-              </Link>
-            ))}
+              )}
+            </div>
+
+            {/* Flecha derecha */}
+            <button
+              onClick={() => scrollSlider(categoriesCarouselRef, 1)}
+              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_right</span>
+            </button>
           </div>
         </section>
 
-        {/* Productos Destacados */}
-        <section className="py-20 max-w-[1280px] mx-auto px-6 bg-white rounded-3xl my-6 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-black">Más Vendidos / Favoritos</h2>
-              <p className="text-slate-500 text-sm mt-1">Componentes comprobados por instaladores certificados.</p>
+        {/* Banner Promocional Racks y Soportes TV */}
+        <section className="relative bg-[#f7f9fb] overflow-hidden py-4 lg:py-6">
+          {/* Imágenes de fondo a los lados */}
+          <img src={banner1} alt="" className="absolute inset-y-0 left-0 w-1/2 object-cover opacity-20" />
+          <img src={banner1} alt="" className="absolute inset-y-0 right-0 w-1/2 object-cover opacity-20 -scale-x-100" />
+
+          {/* Contenedor trapezoidal gris claro */}
+          <div className="relative max-w-[1280px] mx-auto px-6">
+            <div className="mx-auto max-w-3xl bg-[#eef1f4] text-center px-10 py-8 sm:px-16 shadow-lg [clip-path:polygon(5%_0,95%_0,100%_100%,0_100%)]">
+              <span className="inline-flex items-center gap-2 text-[#855300] bg-white/70 border border-slate-200 text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-sm">
+                <span className="material-symbols-outlined text-sm">tv</span>
+                Solo Racks
+              </span>
+              <h2 className="text-xl sm:text-3xl font-black text-slate-900 leading-tight mt-2 uppercase">
+                Racks y Soportes para TV
+              </h2>
+              <div className="w-12 h-[3px] bg-[#fea619] rounded-full mx-auto mt-3"></div>
+              <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mt-3">
+                Te brindan una experiencia de entretenimiento increíble, manteniendo tu televisor
+                seguro y organizado.
+              </p>
             </div>
-            <Link href={route('store.catalog')} className="px-5 py-2.5 bg-black text-white font-bold text-xs rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-105 active:scale-95 transition-all">
-              Ver Todos
+          </div>
+        </section>
+
+        {/* Sección de Productos Racks y Soportes */}
+        <section className="max-w-[1280px] mx-auto px-6 py-14">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Racks y Soportes para TV</h2>
+            <Link
+              href={route('store.catalog')}
+              className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all"
+            >
+              Ver todos los productos <span className="material-symbols-outlined text-base">chevron_right</span>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Producto 1 */}
-            <div className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-              <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgEAMQoSvf7kM2gmjoSyFpUSuC_0b0C2KmGC9_9riq4gBbXlFKApkSw0KXeTytWgKoTnoRCAln1cA77vqTHljvRxAnnu2Df62oLYCqfBBEqApdI-IeVAjHVled9857LOiCunwWkPXaPIOdDP9GNhsbcmPgmfp8aelF3vli4D2Jn5Y2ZM9BioSSe0YMvh8U9qPBttAm8cR5StWmMC_KMRudsot3GaTWOVr3fAM_9ZnFI9Sl1-qPfiBrvn5JOae6kFRMMGoOe1khZzM" alt="Taladro" />
-                <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">TOP VENTAS</span>
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <span className="text-xs font-bold text-[#855300] mb-1">Industrial Power</span>
-                <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors">Taladro de Impacto Pro-Series 18V</h4>
-                <div className="flex items-center gap-1 mb-4 text-xs font-semibold text-slate-600">
-                  <span className="material-symbols-outlined text-[#fea619] text-base">star</span>
-                  <span>4.9 (124 reseñas)</span>
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-xl font-black text-black">$189.00</span>
-                  <Link href={route('store.detail')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
-                    <span className="material-symbols-outlined text-sm">add_shopping_cart</span>
-                  </Link>
-                </div>
-              </div>
+          {/* Carrusel horizontal con flechas */}
+          <div className="relative">
+            {/* Flecha izquierda */}
+            <button
+              onClick={() => scrollSlider(rackCarouselRef, -1)}
+              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold">chevron_left</span>
+            </button>
+
+            <div
+              ref={rackCarouselRef}
+              className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
+            >
+              {rackProducts.map((p) => {
+                const saving = p.oldPrice ? p.oldPrice - p.price : null;
+                const imgUrl = `https://via.placeholder.com/300x300?text=${encodeURIComponent(`${p.sku} - Rack TV`)}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                  >
+                    <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                      <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.name} />
+                      {saving ? (
+                        <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          Ahorrar S/ {saving.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">{p.brand}</span>
+                      )}
+                    </div>
+                    <div className="p-5 flex flex-col flex-grow">
+                      <span className="text-xs font-bold text-[#855300] mb-1">{p.brand} · SKU: {p.sku}</span>
+                      <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.name}</h4>
+                      <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                      <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl font-black text-black">S/ {p.price.toFixed(2)}</span>
+                          {p.oldPrice && (
+                            <span className="text-xs font-semibold text-slate-400 line-through">S/ {p.oldPrice.toFixed(2)}</span>
+                          )}
+                        </div>
+                        <Link href={route('store.catalog')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Producto 2 */}
-            <div className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-              <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhC1xPxfGurvB829SiEw-gC-7Is7dEEX-SKbKWsRLuVR18IYEp-9k7i4lle4FdzVKznECYfoiy3XG9oBkWaPQnv1uj4K_pvavlibH3egzXTvT-7_uztrVzKBRGZgxThKUE1y8Isg3KzPKKG4bKOVv5C2qf2Cp1_UmJRS4eKL_ESTFLPMysFC4fHSwPsuwoERo8z6-YrpjmxYUE5AYlRkX-PgmjYPT5Rq7KC_v2GW0giEAa8Hle6hm19aaigKDmCW7cJIccScKE-pQ" alt="Llaves" />
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <span className="text-xs font-bold text-[#855300] mb-1">Hand Tools</span>
-                <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors">Set de Llaves Master Torque</h4>
-                <div className="flex items-center gap-1 mb-4 text-xs font-semibold text-slate-600">
-                  <span className="material-symbols-outlined text-[#fea619] text-base">star</span>
-                  <span>4.8 (86 reseñas)</span>
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-xl font-black text-black">$124.50</span>
-                  <Link href={route('store.detail')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
-                    <span className="material-symbols-outlined text-sm">add_shopping_cart</span>
-                  </Link>
-                </div>
-              </div>
+            {/* Flecha derecha */}
+            <button
+              onClick={() => scrollSlider(rackCarouselRef, 1)}
+              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold">chevron_right</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Banner Instalación de Rack para TV */}
+        <section className="relative w-full bg-[#2D2D2D] py-16 lg:py-20 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)',
+              backgroundSize: '22px 22px',
+            }}
+          ></div>
+
+          {/* Resplandores decorativos */}
+          <div className="absolute -top-28 -right-24 w-[420px] h-[420px] bg-[#fea619]/10 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="absolute -bottom-32 -left-24 w-[420px] h-[420px] bg-[#fea619]/15 rounded-full blur-[120px] pointer-events-none"></div>
+
+          <div className="relative max-w-[1280px] mx-auto px-6">
+            {/* Encabezado compacto */}
+            <div className="flex flex-col items-center text-center mb-12 lg:mb-14">
+              <span className="inline-flex items-center gap-2 bg-white/10 border border-white/10 text-[#fea619] text-[11px] font-black uppercase tracking-widest px-5 py-2 rounded-full shadow-lg">
+                <span className="material-symbols-outlined text-base">verified</span>
+                Servicio de Instalación Profesional
+              </span>
+              <p className="text-white/70 text-sm sm:text-base mt-4 max-w-2xl mx-auto">
+                Instalación segura y garantizada en todo Lima. Precios referenciales según distrito.
+              </p>
             </div>
 
-            {/* Producto 3 */}
-            <div className="group bg-[#f7f9fb] rounded-2xl border-2 border-[#fea619] overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-              <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVuto-JeT4T_xpuxryDMSkBzRKdvIb2itOcdqqalzmYlcukYx5_pxdsJDeLs3FwTkvboRjbbsk8BS3ySlUioye0ItnPq43CQ-GCiWOuBLJoysxycU1sj0u1aMF-Tj33m_NfzU5rr3O0c5J7C6hVKfoFsSLa3-gUfgNBAZmXXhEgmUojjE09YxewYNf83D8105ZACnUFF_0Pr3aMFbNAK1Oa95ctztwKKwhKwD9tH8TkpeDaiKVcKcGwedNKm1vLoTXLnmuxr4UZ_s" alt="Soporte Slim" />
-                <span className="absolute top-3 right-3 bg-[#fea619] text-black text-[9px] font-black px-2 py-0.5 rounded-full uppercase">CON INSTALACIÓN</span>
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <span className="text-xs font-bold text-[#855300] mb-1">AV Solutions</span>
-                <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors">Soporte Ultra-Slim Tilt (55"-85")</h4>
-                <div className="flex items-center gap-1 mb-4 text-xs font-semibold text-slate-600">
-                  <span className="material-symbols-outlined text-[#fea619] text-base">star</span>
-                  <span>5.0 (312 reseñas)</span>
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-xl font-black text-black">$79.99</span>
-                  <Link href={route('store.detail')} className="p-2.5 bg-[#fea619] text-black font-bold rounded-xl hover:bg-black hover:text-white hover:scale-110 active:scale-95 transition-all">
-                    <span className="material-symbols-outlined text-sm">add_shopping_cart</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
 
-            {/* Producto 4 */}
-            <div className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-              <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD-pfHKzTiL1tDakaBTagwr1NYxITB1nz9CzjvqvihjeJeyOtYP2oit7-BDlDUxnT25D0U8LauIvAij29c_IELwKWefpN6NQtVPIkw1jmviomkwFy8YQMPMdXl6jOazJmgeBGXBSo7cCaHCWNYO2Iuzfq-R8B46VLZDR6hel9cO2CergmN17vTsBFe9k0wrk9H8sufm28Zl7eBPDydz7Qt-rYpO2ytXUbrfdDZZQcJTPWQ_KIvOFXVVB6siBdUKxE9jl6_NloaI1Y" alt="Nivel Láser" />
-              </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <span className="text-xs font-bold text-[#855300] mb-1">Precision Gear</span>
-                <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors">Nivel Láser Green Beam 360°</h4>
-                <div className="flex items-center gap-1 mb-4 text-xs font-semibold text-slate-600">
-                  <span className="material-symbols-outlined text-[#fea619] text-base">star</span>
-                  <span>4.7 (45 reseñas)</span>
+              {/* Columna Izquierda: Bloque naranja sobresaliente */}
+              <div className="relative lg:-my-8">
+                {/* Capa trasera para dar profundidad */}
+                <div className="absolute -inset-2.5 bg-black/30 rounded-[30px] -rotate-2 hidden lg:block"></div>
+
+                <div className="relative bg-gradient-to-br from-[#ffb95f] via-[#fea619] to-[#e8890d] rounded-[28px] px-9 py-12 shadow-2xl shadow-[#fea619]/30 flex flex-col justify-between min-h-[250px] overflow-hidden group">
+                  {/* Marca de agua de TV */}
+                  <span className="material-symbols-outlined absolute -right-6 -bottom-8 text-[140px] text-white/15 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 pointer-events-none">tv</span>
+                  <div className="absolute -top-12 -right-12 w-44 h-44 bg-white/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                  <div className="relative flex items-center justify-between">
+                    <span className="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                      <span className="material-symbols-outlined text-2xl">hardware</span>
+                    </span>
+                    <span className="bg-black/15 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow">
+                      <span className="material-symbols-outlined text-[12px]">verified</span>
+                      Garantizado
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <h3 className="text-3xl lg:text-[2.6rem] font-black text-white leading-[1.08] drop-shadow-md">
+                      Instalación de Rack para TV
+                    </h3>
+                    <div className="w-16 h-[3px] bg-white rounded-full mt-5"></div>
+                  </div>
                 </div>
-                <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-xl font-black text-black">$215.00</span>
-                  <Link href={route('store.detail')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
-                    <span className="material-symbols-outlined text-sm">add_shopping_cart</span>
-                  </Link>
+              </div>
+
+              {/* Columna Central: Información y Contacto */}
+              <div className="text-white">
+                <p className="text-base lg:text-lg leading-relaxed text-white/90 border-l-4 border-[#fea619] pl-5">
+                  Si usted cuenta con un rack de tv nosotros realizamos la instalación sin ningún
+                  problema. Los precios pueden variar dependiendo del distrito.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 mt-9">
+                  <a
+                    href="https://wa.me/51932777858"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2.5 px-4 py-4 bg-[#fea619] text-black font-bold text-sm rounded-full hover:scale-105 hover:bg-[#ffb95f] hover:shadow-2xl hover:shadow-[#fea619]/40 active:scale-95 transition-all shadow-lg cursor-pointer group/wa"
+                  >
+                    <span className="w-9 h-9 rounded-full bg-black text-[#fea619] flex items-center justify-center group-hover/wa:scale-110 transition-transform shrink-0">
+                      <FaWhatsapp className="text-lg" />
+                    </span>
+                    <span className="leading-tight">Contáctanos</span>
+                  </a>
+                  <a
+                    href="tel:+51932777858"
+                    className="inline-flex items-center justify-center gap-2.5 px-4 py-4 bg-[#2D2D2D] border-2 border-[#fea619] text-[#fea619] font-bold text-sm rounded-full hover:bg-[#fea619] hover:text-black hover:scale-105 hover:shadow-2xl hover:shadow-[#fea619]/40 active:scale-95 transition-all shadow-lg cursor-pointer group/tel"
+                  >
+                    <span className="w-9 h-9 rounded-full bg-black text-[#fea619] flex items-center justify-center group-hover/tel:scale-110 transition-transform shrink-0">
+                      <FaPhone className="text-base" />
+                    </span>
+                    <span className="leading-tight">932 777 858</span>
+                  </a>
                 </div>
               </div>
+
+              {/* Columna Derecha: Precio y Detalle */}
+              <div className="text-white lg:text-right">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-white/60">Instalación desde</h4>
+                <p className="text-5xl lg:text-6xl xl:text-7xl font-black text-[#fea619] leading-none mt-4 lg:mt-5 [text-shadow:0_6px_40px_rgba(254,166,25,0.45)] drop-shadow-lg">
+                  S/ 50.00
+                </p>
+
+                <div className="mt-8 lg:mt-9 space-y-4">
+                  <div className="flex lg:justify-end items-center gap-3 pb-4 border-b border-white/15">
+                    <span className="w-6 h-6 rounded-full bg-[#fea619]/15 text-[#fea619] flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-sm">check</span>
+                    </span>
+                    <p className="text-sm text-white/90">Instalación de rack para TV</p>
+                  </div>
+                  <div className="flex lg:justify-end items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-[#fea619]/15 text-[#fea619] flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-sm">check</span>
+                    </span>
+                    <p className="text-sm text-white/90">Instalamos cualquier tipo de rack</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
 
-        {/* Sección de Valor */}
-        <section className="py-20 bg-[#1c1b1b] text-white my-12 rounded-3xl mx-6 p-8 sm:p-16 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold mb-4">El Estándar CMA ProLink</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto mb-12 text-base">
-              Más allá del hardware, entregamos la confianza estructural y la experiencia técnica necesarias para instalaciones de alto nivel.
-            </p>
+        {/* Banner Promocional Ferretería */}
+        <section className="relative bg-[#f7f9fb] overflow-hidden py-4 lg:py-6 mt-8 lg:mt-12">
+          <img src={banner1} alt="" className="absolute inset-y-0 left-0 w-1/2 object-cover opacity-20" />
+          <img src={banner1} alt="" className="absolute inset-y-0 right-0 w-1/2 object-cover opacity-20 -scale-x-100" />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-[#fea619] hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 group">
-                <span className="material-symbols-outlined text-4xl text-[#fea619] mb-4 group-hover:scale-110 group-hover:rotate-6 transition-transform inline-block">verified</span>
-                <h3 className="text-lg font-bold mb-2">Calidad Certificada</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">Cada artículo en nuestro inventario supera rigurosas pruebas de durabilidad industrial.</p>
+          <div className="relative max-w-[1280px] mx-auto px-6">
+            <div className="mx-auto max-w-3xl bg-[#eef1f4] text-center px-10 py-8 sm:px-16 shadow-lg [clip-path:polygon(5%_0,95%_0,100%_100%,0_100%)]">
+              <span className="inline-flex items-center gap-2 text-[#855300] bg-white/70 border border-slate-200 text-[10px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-sm">
+                <span className="material-symbols-outlined text-sm">hardware</span>
+                Ferretería CMA
+              </span>
+              <h2 className="text-xl sm:text-3xl font-black text-slate-900 leading-tight mt-2 uppercase">
+                Herramientas y Materiales de Ferretería
+              </h2>
+              <div className="w-12 h-[3px] bg-[#fea619] rounded-full mx-auto mt-3"></div>
+              <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mt-3">
+                Todo lo que necesitas para construir, reparar y mejorar. Calidad garantizada en cada
+                herramienta de las mejores marcas.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección de Productos Ferretería */}
+        <section className="max-w-[1280px] mx-auto px-6 py-14">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Ferretería y Herramientas</h2>
+            <Link
+              href={route('store.catalog')}
+              className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all"
+            >
+              Ver todos los productos <span className="material-symbols-outlined text-base">chevron_right</span>
+            </Link>
+          </div>
+
+          <div className="relative">
+            {/* Flecha izquierda */}
+            <button
+              onClick={() => scrollSlider(ferreteriaCarouselRef, -1)}
+              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_left</span>
+            </button>
+
+            <div
+              ref={ferreteriaCarouselRef}
+              className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
+            >
+              {ferreteriaProducts.map((p) => {
+                const saving = p.oldPrice ? p.oldPrice - p.price : null;
+                const imgUrl = `https://via.placeholder.com/300x300?text=${encodeURIComponent(`${p.sku} - Ferreteria`)}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                  >
+                    <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                      <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.name} />
+                      {saving ? (
+                        <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          Ahorrar S/ {saving.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">{p.brand}</span>
+                      )}
+                    </div>
+                    <div className="p-5 flex flex-col flex-grow">
+                      <span className="text-xs font-bold text-[#855300] mb-1">{p.brand} · SKU: {p.sku}</span>
+                      <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.name}</h4>
+                      <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                      <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl font-black text-black">S/ {p.price.toFixed(2)}</span>
+                          {p.oldPrice && (
+                            <span className="text-xs font-semibold text-slate-400 line-through">S/ {p.oldPrice.toFixed(2)}</span>
+                          )}
+                        </div>
+                        <Link href={route('store.catalog')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Flecha derecha */}
+            <button
+              onClick={() => scrollSlider(ferreteriaCarouselRef, 1)}
+              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_right</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Widget Flotante de Atención */}
+        <div className="fixed bottom-6 right-6 z-[10000] flex flex-col items-end gap-3">
+          {showHelpWidget && (
+            <div className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 px-5 py-3.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <button
+                onClick={() => setShowHelpWidget(false)}
+                className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-white border border-slate-300 flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm text-slate-600">close</span>
+              </button>
+              <p className="text-sm font-bold text-slate-800">Hola, ¿Puedo ayudarte?</p>
+            </div>
+          )}
+          <a
+            href="https://wa.me/51932777858"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-2xl shadow-black/20 hover:scale-110 hover:rotate-6 transition-transform cursor-pointer"
+          >
+            <FaWhatsapp className="text-3xl text-white" />
+          </a>
+        </div>
+
+        {/* Sección de Productos Destacados */}
+        <section className="max-w-[1280px] mx-auto px-6 py-14">
+          <div className="flex items-start sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <span className="inline-flex items-center gap-2 bg-[#fea619]/10 border border-[#fea619]/30 text-[#855300] text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                <span className="material-symbols-outlined text-sm">local_fire_department</span>
+                Top Ventas
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mt-3">Más Vendidos / Favoritos</h2>
+            </div>
+            <Link
+              href={route('store.catalog')}
+              className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all shrink-0"
+            >
+              Ver todos los productos <span className="material-symbols-outlined text-base">chevron_right</span>
+            </Link>
+          </div>
+
+          <div className="relative">
+            {/* Flecha izquierda */}
+            <button
+              onClick={() => scrollSlider(featuredCarouselRef, -1)}
+              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_left</span>
+            </button>
+
+            <div
+              ref={featuredCarouselRef}
+              className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
+            >
+              {productList.length > 0 ? (
+                productList.map((item) => {
+                  const imgUrl = item.imagen_url
+                    ? (item.imagen_url.startsWith('http://') || item.imagen_url.startsWith('https://')
+                      ? item.imagen_url
+                      : `/storage/${item.imagen_url}`)
+                    : 'https://via.placeholder.com/300?text=Sin+Imagen';
+
+  return (
+                    <div
+                      key={item.id}
+                      className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                    >
+                      <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                        <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={item.nombre} />
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {item.marca?.nombre || item.categoria?.nombre || 'CMA'}
+                        </span>
+                      </div>
+                      <div className="p-5 flex flex-col flex-grow">
+                        <span className="text-xs font-bold text-[#855300] mb-1">
+                          {item.marca?.nombre ? `${item.marca.nombre} · ` : ''}SKU: {item.sku || 'N/A'}
+                        </span>
+                        <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{item.nombre}</h4>
+                        <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                        <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-black text-black">S/ {parseFloat(item.precio_venta || 0).toFixed(2)}</span>
+                          </div>
+                          <Link href={route('store.detail', item.id)} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="w-full text-center py-10 bg-white rounded-2xl border border-slate-200">
+                  <p className="text-slate-500 font-bold">No hay productos disponibles actualmente.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Flecha derecha */}
+            <button
+              onClick={() => scrollSlider(featuredCarouselRef, 1)}
+              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-xl font-bold text-black">chevron_right</span>
+            </button>
+          </div>
+        </section>
+
+        {/* ¿Por qué elegirnos? */}
+        <section className="py-20 max-w-[1280px] mx-auto px-6">
+          <div className="relative bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#fea619]/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 p-8 sm:p-14 items-center">
+              {/* Columna Texto */}
+              <div className="relative">
+                <span className="inline-flex items-center gap-2 bg-[#fea619]/10 border border-[#fea619]/30 text-[#855300] text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                  <span className="material-symbols-outlined text-sm">volunteer_activism</span>
+                  Nuestro Compromiso
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-black text-black leading-tight mt-5">
+                  ¿Por qué elegir <span className="text-[#855300]">Ferretería CMA?</span>
+                </h2>
+                <p className="text-slate-500 mt-4 leading-relaxed max-w-md">
+                  Trabajamos con las marcas de mayor confianza del mercado y ofrecemos asesoría
+                  técnica para que compres con total seguridad y respaldo.
+                </p>
+
+                <ul className="mt-8 space-y-4">
+                  {[
+                    'Precios competitivos para ferreteros y contratistas',
+                    'Stock actualizado en tiempo real desde nuestro POS',
+                    'Atención personalizada y asesoría de instalación',
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-[#fea619]/15 text-[#855300] flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="material-symbols-outlined text-sm">check</span>
+                      </span>
+                      <span className="text-sm font-semibold text-slate-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href={route('store.catalog')}
+                  className="mt-9 inline-flex items-center gap-2.5 px-7 py-3.5 bg-black text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#fea619] hover:text-black hover:scale-105 active:scale-95 transition-all shadow-lg"
+                >
+                  Explorar Catálogo
+                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                </Link>
               </div>
 
-              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-[#fea619] hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 group">
-                <span className="material-symbols-outlined text-4xl text-[#fea619] mb-4 group-hover:scale-110 group-hover:rotate-6 transition-transform inline-block">engineering</span>
-                <h3 className="text-lg font-bold mb-2">Instalación Experta</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">Técnicos certificados manejan montajes estructurales con precisión de plano arquitectónico.</p>
-              </div>
+              {/* Columna Tarjetas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="p-6 bg-[#f7f9fb] border border-slate-200 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  <span className="w-12 h-12 rounded-2xl bg-[#fea619]/15 text-[#855300] flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    <span className="material-symbols-outlined text-2xl">verified</span>
+                  </span>
+                  <h3 className="font-bold text-black mt-4">Marcas Líderes</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Pretul, Stanley, Truper, Strutek y Soportex Innova.</p>
+                  <div className="flex items-center gap-2.5 mt-4 flex-wrap">
+                    <img src={pretulLogo} alt="Pretul" className="h-5 w-auto object-contain grayscale hover:grayscale-0 transition-all" />
+                    <img src={stanleyLogo} alt="Stanley" className="h-5 w-auto object-contain grayscale hover:grayscale-0 transition-all" />
+                    <img src={truperLogo} alt="Truper" className="h-5 w-auto object-contain grayscale hover:grayscale-0 transition-all" />
+                  </div>
+                </div>
 
-              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-[#fea619] hover:bg-white/10 hover:-translate-y-1 transition-all duration-300 group">
-                <span className="material-symbols-outlined text-4xl text-[#fea619] mb-4 group-hover:scale-110 group-hover:rotate-6 transition-transform inline-block">support_agent</span>
-                <h3 className="text-lg font-bold mb-2">Soporte Técnico 24/7</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">Acceso directo a expertos que comprenden compatibilidad de hardware y códigos de seguridad.</p>
+                <div className="p-6 bg-[#f7f9fb] border border-slate-200 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  <span className="w-12 h-12 rounded-2xl bg-[#fea619]/15 text-[#855300] flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                  </span>
+                  <h3 className="font-bold text-black mt-4">Despacho y Delivery</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Coordinamos la entrega de tus pedidos a obra, casa o taller.</p>
+                </div>
+
+                <div className="p-6 bg-[#f7f9fb] border border-slate-200 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  <span className="w-12 h-12 rounded-2xl bg-[#fea619]/15 text-[#855300] flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    <span className="material-symbols-outlined text-2xl">verified_user</span>
+                  </span>
+                  <h3 className="font-bold text-black mt-4">Garantía CMA</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Respaldo y reposición por defectos de fábrica en productos certificados.</p>
+                </div>
+
+                <div className="p-6 bg-[#f7f9fb] border border-slate-200 rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  <span className="w-12 h-12 rounded-2xl bg-[#fea619]/15 text-[#855300] flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    <span className="material-symbols-outlined text-2xl">handyman</span>
+                  </span>
+                  <h3 className="font-bold text-black mt-4">Asesoría Técnica</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">Te orientamos a elegir la herramienta o material correcto para cada trabajo.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -402,34 +780,7 @@ export default function StoreIndex() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-12 border-t border-slate-800">
-        <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
-          <div>
-            <span className="font-black text-lg text-white uppercase tracking-wider block mb-3">CMA ProLink Store</span>
-            <p className="text-slate-400 text-xs leading-relaxed">Hardware de precisión e instalación técnica garantizada para ferretería y contratistas.</p>
-          </div>
-          <div>
-            <h5 className="font-bold uppercase text-xs text-[#fea619] mb-3">Navegación</h5>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link href={route('store.index')} className="hover:text-white transition-colors">Inicio</Link></li>
-              <li><Link href={route('store.catalog')} className="hover:text-white transition-colors">Productos (Racks & Ferretería)</Link></li>
-              <li><Link href={route('store.detail')} className="hover:text-white transition-colors">Producto Destacado</Link></li>
-              <li><Link href={route('dashboard')} className="hover:text-white transition-colors">Sistema POS</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h5 className="font-bold uppercase text-xs text-[#fea619] mb-3">Contacto</h5>
-            <p className="text-xs text-slate-400">Ferretería CMA - Servicio de Atención y Montajes Especializados.</p>
-          </div>
-          <div>
-            <h5 className="font-bold uppercase text-xs text-[#fea619] mb-3">Ubicación</h5>
-            <p className="text-xs text-slate-400">Distrito Industrial - Nave Principal CMA</p>
-          </div>
-        </div>
-        <div className="max-w-[1280px] mx-auto px-6 pt-8 mt-8 border-t border-white/10 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} CMA Hardware & Installation Services. Todos los derechos reservados.
-        </div>
-      </footer>
+      <StoreFooter />
     </div>
   );
 }

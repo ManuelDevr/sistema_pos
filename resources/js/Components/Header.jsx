@@ -124,8 +124,10 @@ const Header = ({ toggleSidebar }) => {
                     </div>
                     Perfil
                   </Link>
-                  <Link
+                  <a
                     href={route('store.index')}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all w-full"
                   >
@@ -133,7 +135,7 @@ const Header = ({ toggleSidebar }) => {
                       <FaStore size={14} />
                     </div>
                     Mi Tienda web
-                  </Link>
+                  </a>
                   <div className="h-px bg-slate-100 my-1" />
                   <button
                     onClick={() => router.post(route('logout'))}

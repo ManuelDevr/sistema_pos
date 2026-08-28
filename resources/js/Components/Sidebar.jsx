@@ -272,19 +272,18 @@ const Sidebar = ({ isOpen, setOpen, isMobile }) => {
             if (element.type === 'item') {
                 if (element.permission && !userPermissions.includes(element.permission)) return null;
                 
-                if (!isOpen && !isMobile) {
+                if (element.routeName === 'store.index') {
                     return (
-                        <div key={idx} className="group relative flex justify-center py-2">
-                            <Link 
-                                href={route(element.routeName)}
-                                className={`p-2.5 rounded-xl transition-all duration-300 ${route().current(element.routeName) ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
-                            >
-                                <element.icon size={22} />
-                            </Link>
-                            <div className="absolute left-full ml-2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-800 uppercase tracking-widest transition-all duration-200 delay-150">
-                                {element.label}
-                            </div>
-                        </div>
+                        <a 
+                            key={idx}
+                            href={route(element.routeName)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center h-10 px-3 rounded-xl text-sm font-medium transition-all duration-200 text-slate-600 hover:bg-slate-100"
+                        >
+                            <element.icon className="w-5 h-5 flex-shrink-0 mr-3" />
+                            {(isOpen || isMobile) && <span>{element.label}</span>}
+                        </a>
                     );
                 }
                 return <NavItem key={idx} item={element} isOpen={isOpen} isMobile={isMobile} setOpen={setOpen} />;
