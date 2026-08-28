@@ -60,7 +60,13 @@ export default function Index({ configuracion }) {
     certificado_digital_remove: false,
   });
 
-  const [logoPreview, setLogoPreview] = useState(configuracion?.logo_empresa ? `/storage/${configuracion.logo_empresa}` : null);
+  const getLogoUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `/storage/${path}`;
+  };
+
+  const [logoPreview, setLogoPreview] = useState(getLogoUrl(configuracion?.logo_empresa));
   const [certNombre, setCertNombre] = useState(configuracion?.certificado_digital ? configuracion.certificado_digital.split('/').pop() : null);
 
   const handleLogoChange = (e) => {

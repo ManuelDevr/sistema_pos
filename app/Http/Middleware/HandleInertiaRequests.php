@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 ? Cache::remember('low_stock_alerts', 120, fn () =>
                     \App\Models\Producto::where('stock', '<=', DB::raw('stock_minimo'))
                         ->where('estado', 'Activo')
+                        ->orderBy('stock', 'asc')
+                        ->take(15)
                         ->get()
                         ->map(function($p) {
                             $type = $p->stock <= 0 ? 'danger' : 'warning';
@@ -67,12 +69,14 @@ class HandleInertiaRequests extends Middleware
                 'success' => session('success'),
                 'error' => session('error'),
                 'warning' => session('warning'),
-                'last_sale' => session('last_sale_id') ? \App\Models\Venta::with([
-                    'cliente:id,nombre,ruc_dni,direccion',
-                    'user:id,name',
-                    'detalles.producto:id,nombre,sku',
-                    'detalles.unidad:id,nombre,abreviatura'
-                ])->find(session('last_sale_id')) : null,
+                'last_sale' => session('last_sale_id') ? \App\Models\Venta::select('id', 'serie', 'numero', 'tipo_comprobante', 'total', 'cliente_id', 'created_at')
+                    ->with([
+                        'cliente:id,nombre,ruc_dni,direccion',
+                        'user:id,name',
+                        'detalles:id,venta_id,producto_id,unidad_id,cantidad,precio_unitario,subtotal',
+                        'detalles.producto:id,nombre,sku',
+                        'detalles.unidad:id,nombre,abreviatura'
+                    ])->find(session('last_sale_id')) : null,
             ],
         ];
     }

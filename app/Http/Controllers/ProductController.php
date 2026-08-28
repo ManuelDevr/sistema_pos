@@ -17,16 +17,29 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $query = Producto::with([
+                'categoria:id,nombre', 
+                'marca:id,nombre',
+                'conversiones.unidad:id,nombre,abreviatura'
+            ])
+            ->orderBy('nombre');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'ilike', "%{$search}%")
+                  ->orWhere('sku', 'ilike', "%{$search}%")
+                  ->orWhere('codigo_barras', 'ilike', "%{$search}%");
+            });
+        }
+
+        if ($category = $request->input('category')) {
+            $query->where('categoria_id', $category);
+        }
+
         return Inertia::render('Products/Index', [
-            'productos' => Producto::with([
-                    'categoria:id,nombre', 
-                    'marca:id,nombre',
-                    'conversiones.unidad:id,nombre,abreviatura'
-                ])
-                ->orderBy('nombre')
-                ->get(),
+            'productos' => $query->paginate(25)->withQueryString(),
             'categorias' => Categoria::select('id', 'nombre', 'parent_id')->with('children:id,nombre,parent_id')->whereNull('parent_id')->get(),
             'marcas' => Marca::select('id', 'nombre')->get(),
             'unidades' => Unidad::select('id', 'nombre', 'abreviatura')->get(),

@@ -36,7 +36,7 @@ class SupabaseStorageService
 
         $url = "{$this->url}/storage/v1/object/{$filePath}";
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(10)->withHeaders([
             'apiKey' => $this->key,
             'Authorization' => "Bearer {$this->key}",
         ])->withBody($contents, $contentType)->post($url);
@@ -61,7 +61,7 @@ class SupabaseStorageService
 
         $fileName = Str::after($url, $prefix);
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(10)->withHeaders([
             'apiKey' => $this->key,
             'Authorization' => "Bearer {$this->key}",
         ])->delete("{$this->url}/storage/v1/object/{$this->bucket}/{$fileName}");

@@ -17,7 +17,9 @@ const Ticket = React.forwardRef(({ sale }, ref) => {
 
   // Determinar ruta del logo de la empresa
   const logoUrl = config?.logo_empresa 
-    ? `/storage/${config.logo_empresa}` 
+    ? (config.logo_empresa.startsWith('http://') || config.logo_empresa.startsWith('https://') 
+        ? config.logo_empresa 
+        : `/storage/${config.logo_empresa}`)
     : null;
 
   return (

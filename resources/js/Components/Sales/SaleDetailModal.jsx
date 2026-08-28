@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, AlertTriangle, Printer } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import toast from 'react-hot-toast';
+import { useReactToPrint } from 'react-to-print';
+import Ticket from './Ticket';
 
 export default function SaleDetailModal({ isOpen, onClose, sale }) {
     const [showConfirm, setShowConfirm] = useState(false);
+    const ticketRef = useRef();
+
+    const handlePrint = useReactToPrint({
+        contentRef: ticketRef,
+        documentTitle: `Ticket_${sale?.nro_comprobante || 'Venta'}`,
+    });
 
     if (!isOpen || !sale) return null;
 
@@ -17,6 +25,7 @@ export default function SaleDetailModal({ isOpen, onClose, sale }) {
             },
             onError: () => {
                 setShowConfirm(false);
+                onClose();
                 toast.error('Error al anular la venta');
             }
         });
@@ -24,6 +33,11 @@ export default function SaleDetailModal({ isOpen, onClose, sale }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            {/* Componente de Ticket Oculto para Reimpresión */}
+            <div className="hidden">
+                <Ticket ref={ticketRef} sale={sale} />
+            </div>
+
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <div>
@@ -88,21 +102,30 @@ export default function SaleDetailModal({ isOpen, onClose, sale }) {
                     </div>
                 </div>
 
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                     <button 
-                        onClick={onClose}
-                        className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-colors"
+                        onClick={handlePrint}
+                        className="px-5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm rounded-xl transition-all flex items-center gap-2 border border-indigo-200"
                     >
-                        Cerrar
+                        <Printer size={18} /> Re-imprimir Ticket
                     </button>
-                    {sale.estado !== 'Anulado' && (
+
+                    <div className="flex items-center gap-3">
                         <button 
-                            className="px-6 py-2 bg-rose-600 text-white font-bold text-sm rounded-xl hover:bg-rose-700 transition-all shadow-md shadow-rose-100"
-                            onClick={() => setShowConfirm(true)}
+                            onClick={onClose}
+                            className="px-6 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-colors"
                         >
-                            Anular Venta
+                            Cerrar
                         </button>
-                    )}
+                        {sale.estado !== 'Anulado' && (
+                            <button 
+                                className="px-6 py-2 bg-rose-600 text-white font-bold text-sm rounded-xl hover:bg-rose-700 transition-all shadow-md shadow-rose-100"
+                                onClick={() => setShowConfirm(true)}
+                            >
+                                Anular Venta
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
