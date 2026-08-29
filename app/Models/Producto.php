@@ -28,6 +28,12 @@ class Producto extends Model
         'categoria_id',
         'marca_id',
         'imagen_url',
+        'video_url',
+        'imagenes',
+    ];
+
+    protected $casts = [
+        'imagenes' => 'array',
     ];
 
     public function categoria(): BelongsTo

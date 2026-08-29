@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Archive, Diamond, Package, Tag as TagIcon, AlertTriangle, ShoppingCart,
-  FileText, DollarSign, Percent, Ruler, Building, Plus, Edit, X, Save, TrendingUp, RotateCcw, ScanLine, Image as ImageIcon, Trash2, Upload
+  FileText, DollarSign, Percent, Ruler, Building, Plus, Edit, Save, TrendingUp, RotateCcw, ScanLine, Image as ImageIcon, Trash2, Upload, Link2 as LinkIcon
 } from 'lucide-react';
 import { useForm, usePage, router } from '@inertiajs/react';
 import toast from 'react-hot-toast';
@@ -80,7 +80,7 @@ const ProductForm = ({ productToEdit, onClose }) => {
   const { categorias, marcas, unidades, productos: allProducts = [] } = usePage().props;
   const isEdit = !!productToEdit;
 
-  const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
+  const { data, setData, processing, errors, reset, clearErrors } = useForm({
     nombre: '',
     descripcion: '',
     sku: '',
@@ -95,10 +95,26 @@ const ProductForm = ({ productToEdit, onClose }) => {
     categoria_id: '',
     marca_id: '',
     estado: 'Activo',
+    video_url: '',
   });
 
-  const [imagenPreview, setImagenPreview] = useState(productToEdit?.imagen_url || null);
-  const [imagenFile, setImagenFile] = useState(null);
+  const [existingImagenes, setExistingImagenes] = useState(() => {
+    const imgs = productToEdit?.imagenes?.length
+      ? productToEdit.imagenes
+      : (productToEdit?.imagen_url ? [productToEdit.imagen_url] : []);
+    return imgs;
+  });
+  const [nuevasImagenes, setNuevasImagenes] = useState([]);
+
+  const resolveImg = (url) => {
+    if (!url) return url;
+    return url.startsWith('http://') || url.startsWith('https://') ? url : `/storage/${url}`;
+  };
+
+  const allImagenes = [
+    ...existingImagenes.map((url) => ({ src: resolveImg(url), key: `existing-${url}` })),
+    ...nuevasImagenes.map(({ file, preview }) => ({ src: preview, key: `new-${preview}` })),
+  ];
 
   // Sincronizar datos cuando el componente se monta o cambia el producto
   useEffect(() => {
@@ -118,13 +134,18 @@ const ProductForm = ({ productToEdit, onClose }) => {
             categoria_id: productToEdit.categoria_id || '',
             marca_id: productToEdit.marca_id || '',
             estado: productToEdit.estado || 'Activo',
+            video_url: productToEdit.video_url || '',
         });
-        setImagenPreview(productToEdit.imagen_url || null);
-        setImagenFile(null);
+        setExistingImagenes(
+          productToEdit.imagenes?.length
+            ? [...productToEdit.imagenes]
+            : (productToEdit.imagen_url ? [productToEdit.imagen_url] : [])
+        );
+        setNuevasImagenes([]);
     } else if (!isEdit) {
         reset();
-        setImagenPreview(null);
-        setImagenFile(null);
+        setExistingImagenes([]);
+        setNuevasImagenes([]);
     }
     clearErrors();
   }, [productToEdit, isEdit]);
@@ -143,26 +164,25 @@ const ProductForm = ({ productToEdit, onClose }) => {
     setData('precio_venta', precioFinal > 0 ? precioFinal.toFixed(2) : '0.00');
   }, [data.precio_compra, data.margen_ganancia, data.tasa_descuento]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImagenFile(file);
-      setImagenPreview(URL.createObjectURL(file));
-    }
+  const handleImageAdd = (e) => {
+    const files = Array.from(e.target.files || []);
+    const allowed = Math.max(0, 6 - existingImagenes.length - nuevasImagenes.length);
+    files.slice(0, allowed).forEach((file) => {
+      setNuevasImagenes((prev) => [...prev, { file, preview: URL.createObjectURL(file) }]);
+    });
+    e.target.value = '';
   };
 
-  const handleImageRemove = () => {
-    if (isEdit && productToEdit?.imagen_url && !imagenFile) {
-      router.delete(route('productos.imagen.destroy', productToEdit.id), {
-        onSuccess: () => {
-          setImagenPreview(null);
-          toast.success('Imagen eliminada');
-        },
-        onError: () => toast.error('Error al eliminar la imagen'),
-      });
+  const handleImageRemove = (index) => {
+    if (index < existingImagenes.length) {
+      setExistingImagenes((prev) => prev.filter((_, i) => i !== index));
     } else {
-      setImagenFile(null);
-      setImagenPreview(null);
+      const i = index - existingImagenes.length;
+      setNuevasImagenes((prev) => {
+        const removed = prev[i];
+        if (removed) URL.revokeObjectURL(removed.preview);
+        return prev.filter((_, idx) => idx !== i);
+      });
     }
   };
 
@@ -181,25 +201,20 @@ const ProductForm = ({ productToEdit, onClose }) => {
         }
     };
 
-    if (imagenFile) {
-      const fd = new FormData();
-      fd.append('_method', isEdit ? 'PUT' : 'POST');
-      fd.append('imagen', imagenFile);
-      Object.entries(data).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          fd.append(key, value);
-        }
-      });
+    const fd = new FormData();
+    fd.append('_method', isEdit ? 'PUT' : 'POST');
+    nuevasImagenes.forEach(({ file }) => fd.append('imagenes[]', file));
+    existingImagenes.forEach((url) => fd.append('imagenes_keep[]', url));
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        fd.append(key, value);
+      }
+    });
 
-      router.post(isEdit
-        ? route('productos.update', productToEdit.id)
-        : route('productos.store'), fd, options
-      );
-    } else if (isEdit) {
-      put(route('productos.update', productToEdit.id), options);
-    } else {
-      post(route('productos.store'), options);
-    }
+    router.post(isEdit
+      ? route('productos.update', productToEdit.id)
+      : route('productos.store'), fd, options
+    );
   };
 
   const gananciaNeta = (parseFloat(data.precio_venta) || 0) - (parseFloat(data.precio_compra) || 0);
@@ -340,35 +355,56 @@ const ProductForm = ({ productToEdit, onClose }) => {
               </FormSelectWithButtons>
             </FormSection>
 
-            <FormSection title="Imagen del Producto" icon={ImageIcon} gridCols="grid-cols-1">
-              <div className="flex flex-col items-center gap-4">
-                {imagenPreview ? (
-                  <div className="relative w-full aspect-square max-w-[200px] mx-auto rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50">
-                    <img src={imagenPreview} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={handleImageRemove}
-                      className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow hover:bg-rose-50 text-rose-500 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full aspect-square max-w-[200px] mx-auto border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-all group">
-                    <Upload size={32} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
-                    <span className="mt-2 text-xs font-bold text-slate-400 group-hover:text-indigo-500 transition-colors">Subir Imagen</span>
-                    <span className="text-[10px] text-slate-300">PNG, JPG, WEBP · Max 2MB</span>
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                  </label>
+            <FormSection title="Imágenes y Video" icon={ImageIcon} gridCols="grid-cols-1">
+              <div>
+                <p className="text-xs text-slate-500 mb-3">Puedes subir hasta 6 imágenes. La primera será la imagen principal del producto.</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {allImagenes.map((img, idx) => (
+                    <div key={img.key} className="relative aspect-square rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50">
+                      <img src={img.src} alt={`Imagen ${idx + 1}`} className="w-full h-full object-cover" />
+                      {idx === 0 && (
+                        <span className="absolute top-1 left-1 bg-indigo-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase">Principal</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleImageRemove(idx)}
+                        className="absolute top-1 right-1 p-1 bg-white/90 rounded-full shadow hover:bg-rose-50 text-rose-500 transition-colors"
+                        title="Quitar imagen"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  {allImagenes.length < 6 && (
+                    <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 cursor-pointer transition-all flex flex-col items-center justify-center gap-1 group">
+                      <Upload size={22} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500 transition-colors">Añadir</span>
+                      <span className="text-[9px] text-slate-300">{allImagenes.length}/6</span>
+                      <input type="file" accept="image/*" multiple onChange={handleImageAdd} className="hidden" />
+                    </label>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">PNG, JPG, WEBP · Máx 2MB por imagen</p>
+                {(errors.imagenes || errors['imagenes.0']) && (
+                  <p className="text-xs text-red-500 mt-1">{errors.imagenes || errors['imagenes.0']}</p>
                 )}
-                {errors.imagen && <p className="text-xs text-red-500">{errors.imagen}</p>}
               </div>
+
+              <FormInput
+                label="Link del Video (YouTube)"
+                name="video_url"
+                value={data.video_url}
+                onChange={e => setData('video_url', e.target.value)}
+                icon={LinkIcon}
+                placeholder="https://www.youtube.com/watch?v=XXXX o el ID del video"
+                error={errors.video_url}
+              />
             </FormSection>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button type="button" onClick={() => { reset(); clearErrors(); setImagenPreview(null); }} className="h-11 px-6 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <button type="button" onClick={() => { reset(); clearErrors(); setExistingImagenes([]); setNuevasImagenes([]); }} className="h-11 px-6 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2">
               <RotateCcw size={18} /> Limpiar
             </button>
             <button type="submit" disabled={processing} className="h-11 px-8 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-100 flex items-center gap-2 disabled:opacity-50">

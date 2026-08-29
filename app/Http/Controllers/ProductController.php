@@ -110,9 +110,21 @@ class ProductController extends Controller
     {
         $data = $request->validated();
 
-        if ($request->hasFile('imagen')) {
-            $data['imagen_url'] = $supabase->upload($request->file('imagen'));
+        $imagenes = array_values(array_filter((array) $request->input('imagenes_keep', [])));
+
+        if ($request->hasFile('imagenes')) {
+            foreach ($request->file('imagenes') as $file) {
+                if (count($imagenes) >= 6) {
+                    break;
+                }
+                $imagenes[] = $supabase->upload($file);
+            }
+        } elseif ($request->hasFile('imagen')) {
+            $imagenes[] = $supabase->upload($request->file('imagen'));
         }
+
+        $data['imagenes'] = array_values(array_slice($imagenes, 0, 6));
+        $data['imagen_url'] = $data['imagenes'][0] ?? null;
 
         Producto::create($data);
 
@@ -123,9 +135,28 @@ class ProductController extends Controller
     {
         $data = $request->validated();
 
-        if ($request->hasFile('imagen')) {
-            $data['imagen_url'] = $supabase->upload($request->file('imagen'), $producto->imagen_url);
+        $imagenes = array_values(array_filter((array) $request->input('imagenes_keep', [])));
+
+        if ($request->hasFile('imagenes')) {
+            foreach ($request->file('imagenes') as $file) {
+                if (count($imagenes) >= 6) {
+                    break;
+                }
+                $imagenes[] = $supabase->upload($file);
+            }
         }
+
+        $imageChanged = $request->hasFile('imagenes') || $imagenes !== array_values((array) ($producto->imagenes ?? []));
+        if ($imageChanged) {
+            $previous = $producto->imagenes ?? ($producto->imagen_url ? [$producto->imagen_url] : []);
+            $removed = array_diff($previous, $imagenes);
+            foreach ($removed as $url) {
+                $supabase->delete($url);
+            }
+        }
+
+        $data['imagenes'] = array_values(array_slice($imagenes, 0, 6));
+        $data['imagen_url'] = $data['imagenes'][0] ?? null;
 
         $producto->update($data);
 
@@ -136,7 +167,16 @@ class ProductController extends Controller
     {
         if ($producto->imagen_url) {
             $supabase->delete($producto->imagen_url);
-            $producto->update(['imagen_url' => null]);
+
+            $imagenes = array_values(array_filter(
+                (array) ($producto->imagenes ?? []),
+                fn ($url) => $url !== $producto->imagen_url
+            ));
+
+            $producto->update([
+                'imagen_url' => $imagenes[0] ?? null,
+                'imagenes' => $imagenes,
+            ]);
         }
 
         return redirect()->back()->with('success', 'Imagen eliminada correctamente.');

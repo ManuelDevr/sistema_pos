@@ -30,6 +30,13 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 ['nombre' => trim($row['categoria'])],
                 ['estado' => 'Activo']
             );
+
+            if (!empty($row['subcategoria'])) {
+                $categoria = Categoria::firstOrCreate(
+                    ['nombre' => trim($row['subcategoria'])],
+                    ['estado' => 'Activo', 'parent_id' => $categoria->id]
+                );
+            }
         }
 
         $marca = null;
@@ -46,6 +53,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'descripcion'     => trim($row['descripcion'] ?? ''),
             'precio_compra'   => $row['precio_compra'],
             'precio_venta'    => $row['precio_venta'],
+            'margen_ganancia' => round((float) $row['precio_venta'] - (float) $row['precio_compra'], 2),
             'stock'           => $row['stock'],
             'stock_minimo'    => $row['stock_minimo'],
             'unidad_medida'   => trim($row['unidad_medida'] ?? 'Unidad'),
@@ -66,6 +74,7 @@ class ProductsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
             'stock'          => 'required|numeric|min:0',
             'stock_minimo'   => 'required|numeric|min:0',
             'categoria'      => 'required|string|max:150',
+            'subcategoria'   => 'nullable|string|max:100',
             'marca'          => 'required|string|max:150',
             'unidad_medida'  => 'required|string|max:50',
         ];

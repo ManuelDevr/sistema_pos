@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import StoreHeader from '@/Components/StoreHeader';
 import StoreFooter from '@/Components/StoreFooter';
 import { formatStock } from '@/Utils/format';
+import { getYouTubeId } from '@/Utils/video';
 
 export default function StoreDetail({ producto, similares, categorias }) {
   const [activeTab, setActiveTab] = useState('details');
@@ -13,16 +14,20 @@ export default function StoreDetail({ producto, similares, categorias }) {
   const [copied, setCopied] = useState(false);
   const thumbsRef = useRef(null);
 
-  const imgUrl = producto?.imagen_url 
-    ? (producto.imagen_url.startsWith('http://') || producto.imagen_url.startsWith('https://') 
-        ? producto.imagen_url 
-        : `/storage/${producto.imagen_url}`)
-    : 'https://via.placeholder.com/500?text=Sin+Imagen';
+  const resolveImg = (url) => {
+    if (!url) return url;
+    return url.startsWith('http://') || url.startsWith('https://') ? url : `/storage/${url}`;
+  };
 
-  // Coloca aquí el ID del video de YouTube cuando esté disponible (ej: 'dQw4w9WgXcQ')
-  const youtubeVideoId = '';
+  const imgUrl = resolveImg(producto?.imagen_url) || 'https://via.placeholder.com/500?text=Sin+Imagen';
 
-  const galleryMedia = [{ type: 'image', url: imgUrl }];
+  const rawImagenes = producto?.imagenes?.length
+    ? producto.imagenes.filter(Boolean)
+    : (producto?.imagen_url ? [producto.imagen_url] : []);
+  const youtubeVideoId = getYouTubeId(producto?.video_url);
+
+  const galleryMedia = rawImagenes.map((url) => ({ type: 'image', url: resolveImg(url) }));
+  if (galleryMedia.length === 0) galleryMedia.push({ type: 'image', url: imgUrl });
   if (youtubeVideoId) galleryMedia.push({ type: 'video' });
   const activeSlide = galleryMedia[activeMedia];
 

@@ -29,6 +29,11 @@ class StoreProductRequest extends FormRequest
             'categoria_id' => 'required|exists:categorias,id',
             'marca_id' => 'nullable|exists:marcas,id',
             'imagen' => 'nullable|image|max:2048',
+            'imagenes' => 'nullable|array|max:6',
+            'imagenes.*' => 'image|mimes:png,jpg,jpeg,webp|max:2048',
+            'imagenes_keep' => 'nullable|array|max:6',
+            'imagenes_keep.*' => 'string',
+            'video_url' => 'nullable|string|max:500',
         ];
     }
 }

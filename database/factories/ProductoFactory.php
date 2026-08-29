@@ -33,6 +33,8 @@ class ProductoFactory extends Factory
             'tasa_descuento' => 0,
             'codigo_barras' => fake()->numerify('#############'),
             'imagen_url' => null,
+            'video_url' => null,
+            'imagenes' => null,
             'estado' => 'Activo',
             'categoria_id' => Categoria::factory(),
             'marca_id' => Marca::factory(),

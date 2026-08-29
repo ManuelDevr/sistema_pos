@@ -10,7 +10,7 @@ import stanleyLogo from '@/Assets/Marcas/stanley-logo.webp';
 import strutekLogo from '@/Assets/Marcas/Strutek-logo.webp';
 import truperLogo from '@/Assets/Marcas/Truper-logo.webp';
 
-export default function StoreIndex({ categorias, productos }) {
+export default function StoreIndex({ categorias, productos, racksCategoria = null, racksProductos = [], construccionCategoria = null, construccionProductos = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showHelpWidget, setShowHelpWidget] = useState(true);
   const rackCarouselRef = useRef(null);
@@ -29,6 +29,14 @@ export default function StoreIndex({ categorias, productos }) {
 
   const mainCategories = categorias || [];
 
+  const racksProducts = racksProductos || [];
+  const racksTitle = racksCategoria?.nombre || 'Racks y Soportes para TV';
+  const racksCategoryId = racksCategoria?.id || null;
+
+  const construccionProducts = construccionProductos || [];
+  const construccionTitle = construccionCategoria?.nombre || 'Ferretería y Herramientas';
+  const construccionCategoryId = construccionCategoria?.id || null;
+
   const categoryIcons = [
     'handyman',
     'power',
@@ -40,27 +48,6 @@ export default function StoreIndex({ categorias, productos }) {
     'engineering',
     'grid_view',
     'settings_brick_home',
-  ];
-
-  const rackProducts = [
-    { id: 1, brand: 'GLIXCO', sku: 'DTD315L', name: 'Soporte de TV fijo para pared 32"-65"', price: 120.0, oldPrice: 130.0, rating: 4.5, reviews: 24 },
-    { id: 2, brand: 'GLIXCO', sku: 'DTD320L', name: 'Soporte de TV basculante inclinable 32"-70"', price: 150.0, oldPrice: null, rating: 4.0, reviews: 18 },
-    { id: 3, brand: 'GLIXCO', sku: 'DTD325L', name: 'Soporte de TV con movimiento completo 37"-75"', price: 180.0, oldPrice: 200.0, rating: 5.0, reviews: 31 },
-    { id: 4, brand: 'GLIXCO', sku: 'DTDM500', name: 'Soporte de TV con cajón para consolas 50"-80"', price: 220.0, oldPrice: 250.0, rating: 4.5, reviews: 12 },
-    { id: 5, brand: 'GLIXCO', sku: 'DTD310L', name: 'Soporte de TV bajo para home theater 32"-55"', price: 95.0, oldPrice: null, rating: 4.0, reviews: 8 },
-    { id: 6, brand: 'GLIXCO', sku: 'DTD330L', name: 'Soporte de TV articulado de doble brazo 42"-75"', price: 210.0, oldPrice: 230.0, rating: 4.5, reviews: 27 },
-    { id: 7, brand: 'GLIXCO', sku: 'DTD340L', name: 'Soporte de TV de cielo raso / proyector hasta 90"', price: 320.0, oldPrice: null, rating: 4.0, reviews: 5 },
-  ];
-
-  const ferreteriaProducts = [
-    { id: 1, brand: 'TRUPER', sku: 'TP-1001', name: 'Taladro percutor 1/2" 600 W', price: 149.0, oldPrice: 179.0 },
-    { id: 2, brand: 'PRETUL', sku: 'PT-2002', name: 'Martillo de uña 16 oz con mango fibra', price: 28.0, oldPrice: null },
-    { id: 3, brand: 'STANLEY', sku: 'ST-3003', name: 'Cinta métrica 5 m x 19 mm', price: 19.5, oldPrice: 24.0 },
-    { id: 4, brand: 'TRUPER', sku: 'TP-4004', name: 'Juego de desarmadores 8 piezas', price: 46.0, oldPrice: null },
-    { id: 5, brand: 'SOPORTEX', sku: 'SP-5005', name: 'Disco de corte metálico 4.5" premium', price: 12.5, oldPrice: 15.0 },
-    { id: 6, brand: 'PRETUL', sku: 'PT-6006', name: 'Flexómetro metálico 3 m', price: 8.9, oldPrice: null },
-    { id: 7, brand: 'STANLEY', sku: 'ST-7007', name: 'Nivel de burbuja 24" de aluminio', price: 32.0, oldPrice: 38.0 },
-    { id: 8, brand: 'TRUPER', sku: 'TP-8008', name: 'Guantes de carnaza reforzados', price: 15.0, oldPrice: null },
   ];
 
   const slides = [
@@ -283,7 +270,7 @@ export default function StoreIndex({ categorias, productos }) {
                 Solo Racks
               </span>
               <h2 className="text-xl sm:text-3xl font-black text-slate-900 leading-tight mt-2 uppercase">
-                Racks y Soportes para TV
+                {racksTitle}
               </h2>
               <div className="w-12 h-[3px] bg-[#fea619] rounded-full mx-auto mt-3"></div>
               <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mt-3">
@@ -297,9 +284,9 @@ export default function StoreIndex({ categorias, productos }) {
         {/* Sección de Productos Racks y Soportes */}
         <section className="max-w-[1280px] mx-auto px-6 py-14">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Racks y Soportes para TV</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{racksTitle}</h2>
             <Link
-              href={route('store.catalog')}
+              href={route('store.catalog', racksCategoryId ? { category: racksCategoryId } : {})}
               className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all"
             >
               Ver todos los productos <span className="material-symbols-outlined text-base">chevron_right</span>
@@ -320,44 +307,48 @@ export default function StoreIndex({ categorias, productos }) {
               ref={rackCarouselRef}
               className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
             >
-              {rackProducts.map((p) => {
-                const saving = p.oldPrice ? p.oldPrice - p.price : null;
-                const imgUrl = `https://via.placeholder.com/300x300?text=${encodeURIComponent(`${p.sku} - Rack TV`)}`;
+              {racksProducts.length > 0 ? (
+                racksProducts.map((p) => {
+                  const imgUrl = p.imagen_url
+                    ? (p.imagen_url.startsWith('http://') || p.imagen_url.startsWith('https://')
+                      ? p.imagen_url
+                      : `/storage/${p.imagen_url}`)
+                    : 'https://via.placeholder.com/300?text=Sin+Imagen';
 
-                return (
-                  <div
-                    key={p.id}
-                    className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
-                  >
-                    <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                      <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.name} />
-                      {saving ? (
-                        <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
-                          Ahorrar S/ {saving.toFixed(2)}
+                  return (
+                    <div
+                      key={p.id}
+                      className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                    >
+                      <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                        <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.nombre} />
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {p.marca?.nombre || p.categoria?.nombre || 'CMA'}
                         </span>
-                      ) : (
-                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">{p.brand}</span>
-                      )}
-                    </div>
-                    <div className="p-5 flex flex-col flex-grow">
-                      <span className="text-xs font-bold text-[#855300] mb-1">{p.brand} · SKU: {p.sku}</span>
-                      <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.name}</h4>
-                      <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
-                      <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl font-black text-black">S/ {p.price.toFixed(2)}</span>
-                          {p.oldPrice && (
-                            <span className="text-xs font-semibold text-slate-400 line-through">S/ {p.oldPrice.toFixed(2)}</span>
-                          )}
+                      </div>
+                      <div className="p-5 flex flex-col flex-grow">
+                        <span className="text-xs font-bold text-[#855300] mb-1">
+                          {p.marca?.nombre ? `${p.marca.nombre} · ` : ''}SKU: {p.sku || 'N/A'}
+                        </span>
+                        <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.nombre}</h4>
+                        <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                        <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-black text-black">S/ {parseFloat(p.precio_venta || 0).toFixed(2)}</span>
+                          </div>
+                          <Link href={route('store.detail', p.id)} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                          </Link>
                         </div>
-                        <Link href={route('store.catalog')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
-                          <span className="material-symbols-outlined text-sm">visibility</span>
-                        </Link>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="w-full text-center py-10 bg-white rounded-2xl border border-slate-200">
+                  <p className="text-slate-500 font-bold">No hay productos disponibles actualmente.</p>
+                </div>
+              )}
             </div>
 
             {/* Flecha derecha */}
@@ -497,7 +488,7 @@ export default function StoreIndex({ categorias, productos }) {
                 Ferretería CMA
               </span>
               <h2 className="text-xl sm:text-3xl font-black text-slate-900 leading-tight mt-2 uppercase">
-                Herramientas y Materiales de Ferretería
+                {construccionTitle}
               </h2>
               <div className="w-12 h-[3px] bg-[#fea619] rounded-full mx-auto mt-3"></div>
               <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mt-3">
@@ -511,9 +502,9 @@ export default function StoreIndex({ categorias, productos }) {
         {/* Sección de Productos Ferretería */}
         <section className="max-w-[1280px] mx-auto px-6 py-14">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Ferretería y Herramientas</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{construccionTitle}</h2>
             <Link
-              href={route('store.catalog')}
+              href={route('store.catalog', construccionCategoryId ? { category: construccionCategoryId } : {})}
               className="text-[#ef4444] font-bold text-sm flex items-center gap-1.5 hover:gap-2.5 hover:underline transition-all"
             >
               Ver todos los productos <span className="material-symbols-outlined text-base">chevron_right</span>
@@ -533,44 +524,48 @@ export default function StoreIndex({ categorias, productos }) {
               ref={ferreteriaCarouselRef}
               className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-2"
             >
-              {ferreteriaProducts.map((p) => {
-                const saving = p.oldPrice ? p.oldPrice - p.price : null;
-                const imgUrl = `https://via.placeholder.com/300x300?text=${encodeURIComponent(`${p.sku} - Ferreteria`)}`;
+              {construccionProducts.length > 0 ? (
+                construccionProducts.map((p) => {
+                  const imgUrl = p.imagen_url
+                    ? (p.imagen_url.startsWith('http://') || p.imagen_url.startsWith('https://')
+                      ? p.imagen_url
+                      : `/storage/${p.imagen_url}`)
+                    : 'https://via.placeholder.com/300?text=Sin+Imagen';
 
-                return (
-                  <div
-                    key={p.id}
-                    className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
-                  >
-                    <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
-                      <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.name} />
-                      {saving ? (
-                        <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
-                          Ahorrar S/ {saving.toFixed(2)}
+                  return (
+                    <div
+                      key={p.id}
+                      className="group bg-[#f7f9fb] rounded-2xl border border-slate-200 overflow-hidden flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-[280px] sm:w-[300px] shrink-0 snap-start"
+                    >
+                      <div className="h-64 p-6 relative overflow-hidden bg-white flex items-center justify-center">
+                        <img className="max-h-full object-contain group-hover:scale-110 transition-transform duration-500" src={imgUrl} alt={p.nombre} />
+                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                          {p.marca?.nombre || p.categoria?.nombre || 'CMA'}
                         </span>
-                      ) : (
-                        <span className="absolute top-3 left-3 bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">{p.brand}</span>
-                      )}
-                    </div>
-                    <div className="p-5 flex flex-col flex-grow">
-                      <span className="text-xs font-bold text-[#855300] mb-1">{p.brand} · SKU: {p.sku}</span>
-                      <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.name}</h4>
-                      <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
-                      <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl font-black text-black">S/ {p.price.toFixed(2)}</span>
-                          {p.oldPrice && (
-                            <span className="text-xs font-semibold text-slate-400 line-through">S/ {p.oldPrice.toFixed(2)}</span>
-                          )}
+                      </div>
+                      <div className="p-5 flex flex-col flex-grow">
+                        <span className="text-xs font-bold text-[#855300] mb-1">
+                          {p.marca?.nombre ? `${p.marca.nombre} · ` : ''}SKU: {p.sku || 'N/A'}
+                        </span>
+                        <h4 className="font-bold text-base text-black mb-2 group-hover:text-[#855300] transition-colors line-clamp-2">{p.nombre}</h4>
+                        <p className="text-xs text-slate-500 mb-4">Stock disponible: <span className="font-bold text-green-600">Disponibles</span></p>
+                        <div className="mt-auto flex items-center justify-between border-t border-slate-200 pt-3">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-black text-black">S/ {parseFloat(p.precio_venta || 0).toFixed(2)}</span>
+                          </div>
+                          <Link href={route('store.detail', p.id)} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                          </Link>
                         </div>
-                        <Link href={route('store.catalog')} className="p-2.5 bg-black text-white rounded-xl hover:bg-[#fea619] hover:text-black hover:scale-110 active:scale-95 transition-all">
-                          <span className="material-symbols-outlined text-sm">visibility</span>
-                        </Link>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="w-full text-center py-10 bg-white rounded-2xl border border-slate-200">
+                  <p className="text-slate-500 font-bold">No hay productos disponibles actualmente.</p>
+                </div>
+              )}
             </div>
 
             {/* Flecha derecha */}

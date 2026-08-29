@@ -214,6 +214,33 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/tienda-web', function () use ($categoriasConDestacado) { 
         $categorias = $categoriasConDestacado();
+
+        $racksCategoria = \App\Models\Categoria::where('nombre', 'Racks TV')->first();
+        $racksProductos = collect();
+        if ($racksCategoria) {
+            $racksProductos = \App\Models\Producto::select('id', 'nombre', 'sku', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
+                ->with(['marca:id,nombre', 'categoria:id,nombre'])
+                ->where('categoria_id', $racksCategoria->id)
+                ->where('estado', 'Activo')
+                ->orderBy('nombre')
+                ->get();
+        }
+
+        $construccionCategoria = \App\Models\Categoria::where('nombre', 'Construccion')->first();
+        $construccionProductos = collect();
+        if ($construccionCategoria) {
+            $construccionCategoriaIds = \App\Models\Categoria::where('parent_id', $construccionCategoria->id)
+                ->pluck('id')
+                ->push($construccionCategoria->id)
+                ->values();
+            $construccionProductos = \App\Models\Producto::select('id', 'nombre', 'sku', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
+                ->with(['marca:id,nombre', 'categoria:id,nombre'])
+                ->whereIn('categoria_id', $construccionCategoriaIds)
+                ->where('estado', 'Activo')
+                ->orderBy('nombre')
+                ->get();
+        }
+
         $productos = \App\Models\Producto::select('id', 'nombre', 'sku', 'stock', 'precio_venta', 'unidad_medida', 'marca_id', 'categoria_id', 'imagen_url')
             ->with(['marca:id,nombre', 'categoria:id,nombre'])
             ->where('estado', 'Activo')
@@ -222,7 +249,11 @@ Route::middleware(['auth'])->group(function () {
             ->get();
         return Inertia::render('Store/Index', [
             'categorias' => $categorias,
-            'productos' => $productos
+            'productos' => $productos,
+            'racksCategoria' => $racksCategoria,
+            'racksProductos' => $racksProductos,
+            'construccionCategoria' => $construccionCategoria,
+            'construccionProductos' => $construccionProductos,
         ]); 
     })->name('store.index');
 
